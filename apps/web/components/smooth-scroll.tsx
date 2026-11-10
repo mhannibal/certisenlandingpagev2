@@ -28,6 +28,8 @@ function AnchorNav() {
     if (!lenis) return;
     const smooth = (y: number, duration = DURATION) => lenis.scrollTo(y, { duration, easing: easeInOutCubic });
     const go = (y: number) => {
+      // Le visiteur navigue : la lecture automatique du film s'arrête.
+      window.dispatchEvent(new Event("herofilm:user"));
       const film = document.querySelector<HTMLElement>("[data-skip-on-jump]");
       const cur = window.scrollY;
       if (!film) return smooth(y);

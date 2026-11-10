@@ -9,6 +9,7 @@ import { Problem } from "@/components/sections/problem";
 import { Roadmap } from "@/components/sections/roadmap";
 import { Solution } from "@/components/sections/solution";
 import { TrustStrip } from "@/components/sections/trust-strip";
+import { SECTIONS } from "@/lib/sections";
 
 export default function Home() {
   return (
@@ -16,14 +17,14 @@ export default function Home() {
       <Navbar />
       <HeroFilm />
       <TrustStrip />
-      <Problem />
-      <Gap />
-      <Solution />
-      <Features />
-      <Cinema />
-      <Positioning />
-      <Roadmap />
-      <Contact />
+      {SECTIONS.problem ? <Problem /> : null}
+      {SECTIONS.gap ? <Gap /> : null}
+      {SECTIONS.solution ? <Solution /> : null}
+      {SECTIONS.features ? <Features /> : null}
+      {SECTIONS.cinema ? <Cinema /> : null}
+      {SECTIONS.positioning ? <Positioning /> : null}
+      {SECTIONS.roadmap ? <Roadmap /> : null}
+      {SECTIONS.contact ? <Contact /> : null}
       <Footer />
     </main>
   );

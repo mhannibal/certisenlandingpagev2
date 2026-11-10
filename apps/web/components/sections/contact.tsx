@@ -24,8 +24,11 @@ import { BlurText, Reveal } from "@/components/ui/blur-text";
 import { BrandLogo, LOGOS } from "@/components/ui/brand-logo";
 import { Container, SectionLabel } from "@/components/ui/primitives";
 import { useDict, useI18n } from "@/lib/i18n/provider";
+import { sectionIndex } from "@/lib/sections";
 
 const EMAIL = "certisen@inria.fr";
+/** Formulaire de contact : désactivé le 10/11/2026 (Lucas) ; l'e-mail et LinkedIn restent. */
+const CONTACT_FORM = false;
 const LINKEDIN = "https://www.linkedin.com/company/certisen";
 
 function Field({
@@ -213,52 +216,59 @@ export function Contact() {
     setSent(true);
   };
 
+  const heading = (
+    <>
+      <Reveal>
+        <SectionLabel index={sectionIndex("contact")}>{t.eyebrow}</SectionLabel>
+      </Reveal>
+      <h2 className="mt-4 text-balance text-[2.5rem] font-medium leading-[1.05] tracking-[-0.04em] text-fg sm:mt-6 sm:text-6xl">
+        <BlurText text={t.title} />
+        {/[　-鿿＀-￯]$/.test(t.title) ? null : " "}
+        <BlurText text={t.accent} delay={0.15} wordClassName="text-subtle" />
+      </h2>
+      <Reveal delay={0.15}>
+        <p className="mt-4 max-w-md text-base text-muted sm:mt-6 sm:text-lg">{t.lead}</p>
+      </Reveal>
+    </>
+  );
+  const links = (
+    <motion.div
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ staggerChildren: 0.09, delayChildren: 0.2 }}
+      className="divide-y divide-line border-y border-line text-sm"
+    >
+      <CopyEmail />
+      <ContactLink href={LINKEDIN} external icon={<span className="w-4 text-center font-semibold">in</span>} label={t.linkedin} />
+      <motion.p variants={ROW} className="flex items-center gap-3 py-4 text-muted">
+        <MapPin className="size-4 shrink-0" strokeWidth={1.5} />
+        {t.address}
+      </motion.p>
+    </motion.div>
+  );
+
+  // Formulaire désactivé (10/11/2026, Lucas) : titre à gauche, coordonnées à droite sur PC.
+  if (!CONTACT_FORM) {
+    return (
+      <section id="contact" className="relative py-20 sm:py-28 lg:py-36">
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-end lg:gap-16">
+            <div>{heading}</div>
+            {links}
+          </div>
+        </Container>
+      </section>
+    );
+  }
+
   return (
     <section id="contact" className="relative py-20 sm:py-28 lg:py-36">
       <Container>
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col">
-            <Reveal>
-              <SectionLabel index="08">{t.eyebrow}</SectionLabel>
-            </Reveal>
-            <h2 className="mt-4 text-balance text-[2.5rem] font-medium leading-[1.05] tracking-[-0.04em] text-fg sm:mt-6 sm:text-6xl">
-              <BlurText text={t.title} />
-              {/[　-鿿＀-￯]$/.test(t.title) ? null : " "}
-              <BlurText
-                text={t.accent}
-                delay={0.15}
-                wordClassName="text-subtle"
-              />
-            </h2>
-            <Reveal delay={0.15}>
-              <p className="mt-4 max-w-md text-base text-muted sm:mt-6 sm:text-lg">{t.lead}</p>
-            </Reveal>
-            <div className="mt-auto pt-8 sm:pt-12">
-              <motion.div
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ staggerChildren: 0.09, delayChildren: 0.2 }}
-                className="divide-y divide-line border-y border-line text-sm"
-              >
-                <CopyEmail />
-                <ContactLink
-                  href={LINKEDIN}
-                  external
-                  icon={
-                    <span className="w-4 text-center font-semibold">in</span>
-                  }
-                  label={t.linkedin}
-                />
-                <motion.p
-                  variants={ROW}
-                  className="flex items-center gap-3 py-4 text-muted"
-                >
-                  <MapPin className="size-4 shrink-0" strokeWidth={1.5} />
-                  {t.address}
-                </motion.p>
-              </motion.div>
-            </div>
+            {heading}
+            <div className="mt-auto pt-8 sm:pt-12">{links}</div>
           </div>
 
           <Reveal delay={0.1} parallax={16}>

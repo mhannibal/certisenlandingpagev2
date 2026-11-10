@@ -4,7 +4,8 @@ const fr: Dictionary = {
   meta: {
     title: "CertiSen · Certification formelle des réseaux TSN",
     description:
-      "CertiSen est la couche de vérification formelle du temps pour les véhicules définis par logiciel : l'IA propose les configurations TSN, des preuves vérifiées par machine les certifient, à chaque mise à jour OTA.",
+      "Vérification formelle continue pour les véhicules définis par logiciel : sûreté temporelle et cybersécurité prouvées après chaque mise à jour OTA.",
+    keywords: ["CertiSen", "vérification formelle", "TSN", "Time-Sensitive Networking", "IEEE 802.1Qbv", "IEEE 802.1AS", "véhicule défini par logiciel", "SDV", "mise à jour OTA", "sûreté temporelle", "cybersécurité automobile", "Rocq", "preuve formelle", "ASIL-D", "Inria"],
   },
   loader: {
     steps: {
@@ -29,7 +30,7 @@ const fr: Dictionary = {
     badge: "Sélectionné au programme Pionniers de l'IA",
     title1: "Chaque milliseconde,",
     title2: "prouvée.",
-    lead: "CertiSen est la couche de vérification formelle du temps pour les véhicules définis par logiciel. L'IA propose les configurations des réseaux TSN ; des preuves vérifiées par machine les certifient, après chaque mise à jour OTA.",
+    lead: "CertiSen est la couche de vérification formelle continue pour les véhicules définis par logiciel. On garantit la sûreté temporelle et la cybersécurité après chaque mise à jour OTA avec des preuves mathématiques.",
     cta: "Demander une démonstration",
     secondary: "Comment ça marche",
     facts: [
@@ -236,10 +237,13 @@ const fr: Dictionary = {
   heroFilm: {
     label: "De l'usine à la route, certifié par CertiSen",
     scroll: "Faites défiler pour commencer",
+    autoplay: "Lecture automatique · faites défiler pour reprendre la main",
+    resume: "Lecture automatique",
+    resumeShort: "Lecture auto",
     hint: "Cliquez sur un point pour voir ce que c'est",
     showDetails: "Détails",
     hideDetails: "Masquer",
-    lead: "CertiSen est la couche de vérification formelle du temps pour les [[véhicules définis par logiciel (SDV)]]. L'IA propose les configurations des réseaux TSN ; des preuves vérifiées par machine les certifient [[après chaque mise à jour OTA]].",
+    lead: "CertiSen est la couche de vérification formelle continue pour les [[véhicules définis par logiciel]]. On garantit la sûreté temporelle et la cybersécurité [[après chaque mise à jour OTA]] avec des preuves mathématiques.",
     chapters: ["Assemblage", "Mise à jour OTA", "Certification", "Déploiement", "Sûreté temporelle", "Échéances", "Surveillance", "Cybersécurité", "Latence", "En route"],
     assembly: {
       eyebrow: "Ligne du constructeur",

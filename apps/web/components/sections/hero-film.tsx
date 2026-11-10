@@ -28,6 +28,7 @@ import {
   Network,
   Package,
   PackageCheck,
+  Play,
   Radar,
   Route,
   ShieldBan,
@@ -37,6 +38,7 @@ import {
   Syringe,
   type LucideIcon,
 } from "lucide-react";
+import { useLenis } from "lenis/react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { LogoMark } from "@/components/logo";
 import { useLoaderSignal, useReady } from "@/components/loader";
@@ -159,6 +161,7 @@ function StoryPanel({ progress }: { progress: MotionValue<number> }) {
   useEffect(() => {
     const update = () => {
       heroLayout.bottom = window.innerWidth < 1024 && h ? h + (window.innerWidth < 640 ? 12 : 96) : 0;
+      document.documentElement.style.setProperty("--hero-panel", `${window.innerWidth < 768 ? heroLayout.bottom : 0}px`);
     };
     update();
     window.addEventListener("resize", update);
@@ -915,6 +918,153 @@ function IntroOverlay({ intro }: { intro: MotionValue<number> }) {
   );
 }
 
+/** Durée de la lecture automatique de tout le héros (intro comprise), et attente avant le départ. */
+const AUTOPLAY_SECONDS = 100;
+const AUTOPLAY_DELAY_MS = 1800;
+/** Touches qui font défiler la page : le visiteur reprend la main. */
+const SCROLL_KEYS = new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "]);
+
+/**
+ * Lecture automatique du film à l'arrivée sur le site : la page défile seule, à vitesse
+ * constante, jusqu'à la fin du héros. Dès que le visiteur fait défiler (molette, doigt,
+ * clavier, barre de défilement) ou navigue (lien, chapitre), la lecture s'arrête pour de
+ * bon et il pilote le film comme avant. Pas de lecture automatique si la page s'ouvre
+ * ailleurs qu'en haut (ancre, retour en arrière) ni si le visiteur réduit les animations.
+ */
+function useAutoplay(section: RefObject<HTMLElement | null>) {
+  const lenis = useLenis();
+  const ready = useReady();
+  const [playing, setPlaying] = useState(false);
+  const ctl = useRef<{ start: (delay?: number) => void } | null>(null);
+  useEffect(() => {
+    const el = section.current;
+    if (!lenis || !el) return;
+    let raf = 0;
+    let timer = 0;
+    let last = 0;
+    let y = 0;
+    let active = false;
+    const end = () => el.offsetTop + el.offsetHeight - window.innerHeight;
+    const step = (t: number) => {
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+      last = t;
+      const target = end();
+      y = Math.min(target, y + (target / AUTOPLAY_SECONDS) * dt);
+      lenis.scrollTo(y, { immediate: true, force: true });
+      if (y >= target) return stop();
+      raf = requestAnimationFrame(step);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (SCROLL_KEYS.has(e.key)) stop();
+    };
+    // Barre de défilement (clic à droite de la page) ou défilement au clic molette.
+    const onPointer = (e: PointerEvent) => {
+      if (e.button === 1 || e.clientX >= document.documentElement.clientWidth) stop();
+    };
+    const listeners: [string, EventListener][] = [
+      ["wheel", () => stop()],
+      ["touchmove", () => stop()],
+      ["keydown", onKey as EventListener],
+      ["pointerdown", onPointer as EventListener],
+      ["herofilm:user", () => stop()],
+    ];
+    function stop() {
+      if (!active) return;
+      active = false;
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+      for (const [type, fn] of listeners) window.removeEventListener(type, fn);
+      setPlaying(false);
+    }
+    // Lecture depuis la position actuelle jusqu'à la fin du héros.
+    const start = (delay = 0) => {
+      if (active || window.scrollY >= end() - 2) return;
+      active = true;
+      last = 0;
+      y = window.scrollY;
+      for (const [type, fn] of listeners) window.addEventListener(type, fn, { passive: true });
+      setPlaying(true);
+      timer = window.setTimeout(() => {
+        y = window.scrollY;
+        raf = requestAnimationFrame(step);
+      }, delay);
+    };
+    ctl.current = { start };
+    return () => {
+      stop();
+      ctl.current = null;
+    };
+  }, [lenis, section]);
+  // À l'arrivée sur le site (en haut de page, sans ancre) : départ automatique.
+  useEffect(() => {
+    if (!lenis || !ready) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.location.hash || window.scrollY > 4) return;
+    ctl.current?.start(AUTOPLAY_DELAY_MS);
+  }, [lenis, ready]);
+  return { playing, resume: () => ctl.current?.start(0) };
+}
+
+/** Vrai quand la page n'a pas défilé depuis `ms` millisecondes. */
+function useScrollIdle(ms = 1400) {
+  const [idle, setIdle] = useState(false);
+  useEffect(() => {
+    let timer = window.setTimeout(() => setIdle(true), ms);
+    const onScroll = () => {
+      setIdle(false);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setIdle(true), ms);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(timer);
+    };
+  }, [ms]);
+  return idle;
+}
+
+/**
+ * Bouton « lecture automatique », en bas à droite pendant le film. Il apparaît quand la
+ * lecture automatique est arrêtée ET que le visiteur ne fait plus défiler (entrée en
+ * douceur, deux ondes autour du bouton) ; il disparaît dès qu'il refait défiler. Un clic
+ * relance la lecture depuis l'endroit où l'on est. Sur mobile, il se place au-dessus du panneau.
+ */
+function AutoplayButton({ show, label, short, onClick }: { show: boolean; label: string; short: string; onClick: () => void }) {
+  return (
+    <AnimatePresence>
+      {show ? (
+        <motion.button
+          key="autoplay"
+          type="button"
+          aria-label={label}
+          title={label}
+          onClick={onClick}
+          initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+          transition={{ duration: 0.45, ease: EASE }}
+          whileTap={{ scale: 0.95 }}
+          // Même pastille que le sélecteur de langue de la barre (bordure fine, texte gris qui
+          // s'éclaire au survol), sur fond verre pour rester lisible au-dessus de la scène 3D.
+          className="group absolute bottom-[calc(var(--hero-panel,0px)_+_0.75rem)] right-3 z-20 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-line-2 bg-ink/70 px-3.5 text-muted backdrop-blur-xl transition-colors duration-300 hover:border-subtle hover:text-fg md:bottom-14 md:right-6"
+        >
+          {/* Onde sur le contour à l'apparition, deux fois, pour attirer l'œil sans insister */}
+          <motion.span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-full border border-fg/60"
+            initial={{ scale: 1, opacity: 0.7 }}
+            animate={{ scale: 1.18, opacity: 0 }}
+            transition={{ duration: 1.1, ease: "easeOut", repeat: 1, repeatDelay: 0.3, delay: 0.35 }}
+          />
+          <Play className="size-3 shrink-0 fill-current text-fg" strokeWidth={2.2} />
+          <span className="whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.14em]">{short}</span>
+        </motion.button>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
 /**
  * Héros du site : film au
  * défilement. Assemblage, mise à jour OTA, certification CertiSen, déploiement,
@@ -924,12 +1074,18 @@ export function HeroFilm() {
   const t = useDict().heroFilm;
   const onSceneReady = useLoaderSignal("heroScene");
   const ref = useRef<HTMLElement>(null);
+  const { playing: autoplay, resume } = useAutoplay(ref);
+  const idle = useScrollIdle();
+  const ready = useReady();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.6 });
   // Le début du défilement joue l'intro, la suite joue le film.
   const intro = useTransform(progress, [0, INTRO], [0, 1]);
   const film = useTransform(progress, [INTRO, 1], [0, 1]);
-  const hint = useTransform(intro, [0, 0.15], [1, 0]);
+  const [atEnd, setAtEnd] = useState(false);
+  useMotionValueEvent(film, "change", (v) => setAtEnd((prev) => (prev === v > 0.985 ? prev : v > 0.985)));
+  // En lecture automatique, l'indication reste un peu plus longtemps (le temps de la lire).
+  const hint = useTransform(intro, (i) => 1 - Math.min(1, i / (autoplay ? 0.6 : 0.15)));
   // Écran large (≥ 640 px), lu après le montage : le rendu serveur et le premier rendu client concordent.
   const wide = useMotionValue(0);
   useEffect(() => {
@@ -982,11 +1138,12 @@ export function HeroFilm() {
           style={{ opacity: hint }}
           className="pointer-events-none absolute inset-x-0 bottom-20 flex flex-col items-center gap-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted"
         >
-          {t.scroll}
+          {autoplay ? t.autoplay : t.scroll}
           <ChevronDown className="size-4 animate-bounce" />
         </motion.div>
 
         <Chapters progress={film} intro={intro} section={ref} />
+        <AutoplayButton show={ready && !autoplay && !atEnd && idle} label={t.resume} short={t.resumeShort} onClick={resume} />
         <div className="absolute inset-x-0 bottom-0 h-0.5 bg-line md:hidden">
           <motion.div style={{ scaleX: bar }} className="h-full origin-left bg-fg" />
         </div>

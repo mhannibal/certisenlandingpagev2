@@ -33,6 +33,7 @@ import { useDict, useI18n } from "@/lib/i18n/provider";
 import { useLoaderSignal } from "@/components/loader";
 import { TsnGraph } from "./tsn-graph";
 import { WebGLGuard } from "@/components/three/webgl-guard";
+import { sectionIndex } from "@/lib/sections";
 
 const CarCanvas = dynamic(() => import("@/components/three/car-canvas"), {
   ssr: false,
@@ -596,7 +597,7 @@ export function Cinema() {
 
         {/* en-tête */}
         <div className="pointer-events-none absolute inset-x-0 top-28 mx-auto flex max-w-[1200px] items-start justify-between gap-4 px-6">
-          <SectionLabel index="05">{c.eyebrow}</SectionLabel>
+          <SectionLabel index={sectionIndex("cinema")}>{c.eyebrow}</SectionLabel>
           <AnimatePresence>
             {showHint ? (
               <motion.span

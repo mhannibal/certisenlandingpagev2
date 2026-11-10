@@ -27,6 +27,8 @@ export const FILM = {
   /** Certifié : anneau au sol, puis emblème au-dessus. */
   ring: [0.245, 0.28] as Range,
   emblem: [0.252, 0.282] as Range,
+  /** L'emblème passe au-dessus de chaque paquet et le scanne, juste avant le déploiement. */
+  stamp: [0.283, 0.305] as Range,
   certifiedOut: [0.305, 0.325] as Range,
   /** Déploiement : chaque paquet descend vers son calculateur. */
   deploy: [0.322, 0.366] as Range,
@@ -126,6 +128,11 @@ export const PACKAGES = [
 
 /** Fenêtres de téléchargement et de déploiement de chaque paquet (scène et cartes). */
 export const downloadOf = (i: number) => [FILM.download[0] + i * 0.016, FILM.download[0] + i * 0.016 + 0.022] as const;
+/** Fenêtre de scan de chaque paquet par l'emblème. */
+export const stampOf = (i: number) => {
+  const w = (FILM.stamp[1] - FILM.stamp[0]) / PACKAGES.length;
+  return [FILM.stamp[0] + i * w, FILM.stamp[0] + (i + 1) * w] as const;
+};
 export const deployOf = (i: number) => [FILM.deploy[0] + i * 0.012, FILM.deploy[0] + i * 0.012 + 0.02] as const;
 
 /** Flux affichés (pire cas prouvé / échéance, ms), mêmes valeurs que lib/car-network. */

@@ -5,6 +5,7 @@ import { Activity, Check, FlaskConical, Minus, Plus, Sigma } from "lucide-react"
 import { Reveal } from "@/components/ui/blur-text";
 import { Container, SPOTLIGHT, SectionHeading, SpotlightGlow, trackSpotlight } from "@/components/ui/primitives";
 import { useDict } from "@/lib/i18n/provider";
+import { sectionIndex } from "@/lib/sections";
 
 /** États de la même configuration à chaque version : validée une fois, ou certifiée à chaque mise à jour. */
 const LIFECYCLE: ("ok" | "unknown")[][] = [
@@ -18,7 +19,7 @@ export function Gap() {
   return (
     <section className="bg-fade relative py-20 sm:py-28 lg:py-36">
       <Container>
-        <SectionHeading index="02" eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
+        <SectionHeading index={sectionIndex("gap")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
 
         <div className="mt-10 grid gap-4 sm:mt-16 sm:gap-5 lg:grid-cols-[1fr_1.15fr]">
           <Reveal parallax={12}>

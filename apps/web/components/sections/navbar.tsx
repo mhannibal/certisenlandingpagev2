@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { LOCALES, LOCALE_COOKIE, LOCALE_META, type Locale } from "@/lib/i18n/config";
 import { useI18n } from "@/lib/i18n/provider";
 import { useReady } from "@/components/loader";
+import { SECTIONS, type SectionKey } from "@/lib/sections";
 
 /** Change de langue : retient le choix (cookie, 1 an) puis charge la page dans cette langue. */
 function switchLocale(next: Locale) {
@@ -157,12 +158,12 @@ export function Navbar() {
   });
 
   const links = [
-    { href: "#probleme", label: dict.nav.links.problem },
-    { href: "#solution", label: dict.nav.links.solution },
-    { href: "#plateforme", label: dict.nav.links.platform },
-    { href: "#montage", label: dict.nav.links.action },
-    { href: "#feuille-de-route", label: dict.nav.links.journey },
-  ];
+    { href: "#probleme", label: dict.nav.links.problem, key: "problem" },
+    { href: "#solution", label: dict.nav.links.solution, key: "solution" },
+    { href: "#plateforme", label: dict.nav.links.platform, key: "features" },
+    { href: "#montage", label: dict.nav.links.action, key: "cinema" },
+    { href: "#feuille-de-route", label: dict.nav.links.journey, key: "roadmap" },
+  ].filter((l) => SECTIONS[l.key as SectionKey]);
 
   return (
     <motion.header

@@ -4,12 +4,17 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { Container, SectionHeading } from "@/components/ui/primitives";
 import { useDict } from "@/lib/i18n/provider";
+import { sectionIndex } from "@/lib/sections";
 
 
+
+/** Étapes masquées (rang dans la liste des dictionnaires). */
+const HIDDEN_STEPS = new Set([1]);
 
 export function Roadmap() {
   const t = useDict().roadmap;
-  const STEPS = t.steps;
+  // Étape 2 (« Mai 2025 · Faisabilité démontrée ») désactivée le 10/11/2026 (Lucas).
+  const STEPS = t.steps.filter((_, i) => !HIDDEN_STEPS.has(i));
   const ref = useRef<HTMLOListElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 75%", "end 55%"] });
   const scaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
@@ -17,7 +22,7 @@ export function Roadmap() {
   return (
     <section id="feuille-de-route" className="bg-fade relative py-20 sm:py-28 lg:py-36">
       <Container>
-        <SectionHeading index="07" eyebrow={t.eyebrow} title={t.title} accent={t.accent} />
+        <SectionHeading index={sectionIndex("roadmap")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} />
 
         <ol ref={ref} className="relative mt-10 sm:mt-16">
           <span className="absolute bottom-0 left-[7px] top-0 w-px bg-line md:left-[calc(25%+7px)]" />

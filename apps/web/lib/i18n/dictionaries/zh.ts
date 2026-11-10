@@ -5,7 +5,8 @@ const zh: Dictionary = {
   meta: {
     title: "CertiSen · TSN 网络形式化认证",
     description:
-      "CertiSen 是面向软件定义汽车的时序形式化验证层：由 AI 提出 TSN 配置，再由机器检验的证明完成认证，并在每次 OTA 升级后重新验证。",
+      "面向软件定义汽车的持续形式化验证：每次 OTA 升级后，以数学证明保障时间安全与网络安全。",
+    keywords: ["CertiSen", "形式化验证", "TSN", "时间敏感网络", "IEEE 802.1Qbv", "IEEE 802.1AS", "软件定义汽车", "SDV", "OTA 升级", "时间安全", "汽车网络安全", "Rocq", "形式化证明", "ASIL-D", "Inria"],
   },
   loader: {
     steps: {
@@ -30,7 +31,7 @@ const zh: Dictionary = {
     badge: "入选 Pionniers de l'IA（人工智能先锋）计划",
     title1: "每一毫秒，",
     title2: "皆有证明。",
-    lead: "CertiSen 是面向软件定义汽车的时序形式化验证层。AI 提出 TSN 网络配置，机器检验的形式化证明对其进行认证，并在每次 OTA 升级后重新验证。",
+    lead: "CertiSen 是面向软件定义汽车的持续形式化验证层。我们以数学证明保障每次 OTA 升级后的时间安全与网络安全。",
     cta: "预约演示",
     secondary: "了解原理",
     facts: [
@@ -233,10 +234,13 @@ const zh: Dictionary = {
   heroFilm: {
     label: "从工厂到道路，经 CertiSen 认证",
     scroll: "向下滚动开始",
+    autoplay: "自动播放 · 滚动即可接管",
+    resume: "自动播放",
+    resumeShort: "自动播放",
     hint: "点击圆点，查看对应部件",
     showDetails: "详情",
     hideDetails: "收起",
-    lead: "CertiSen 是面向[[软件定义汽车（SDV）]]的时序形式化验证层。AI 提出 TSN 网络配置，机器检验的形式化证明对其进行认证，并[[在每次 OTA 升级后重新验证]]。",
+    lead: "CertiSen 是面向[[软件定义汽车]]的持续形式化验证层。我们以数学证明保障[[每次 OTA 升级后]]的时间安全与网络安全。",
     chapters: ["装配", "OTA 更新", "认证", "部署", "时间安全", "截止时间", "监控", "网络安全", "延迟", "上路"],
     assembly: {
       eyebrow: "整车厂产线",

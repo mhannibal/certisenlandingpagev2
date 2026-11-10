@@ -6,6 +6,7 @@ import { WebGLGuard } from "@/components/three/webgl-guard";
 import { Reveal } from "@/components/ui/blur-text";
 import { Container, SPOTLIGHT, SectionHeading, SpotlightGlow, trackSpotlight } from "@/components/ui/primitives";
 import { useDict } from "@/lib/i18n/provider";
+import { sectionIndex } from "@/lib/sections";
 
 /** Coloration monochrome : mots-clés en blanc, identifiants en gris, commentaires atténués. */
 const TONE = { k: "text-fg", i: "text-muted", c: "text-subtle", p: "text-[#5a5a5a]" } as const;
@@ -34,7 +35,7 @@ export function Positioning() {
   return (
     <section className="relative py-20 sm:py-28 lg:py-36">
       <Container>
-        <SectionHeading index="06" eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
+        <SectionHeading index={sectionIndex("positioning")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
 
         <div className="mt-10 grid gap-4 sm:mt-16 sm:gap-5 lg:grid-cols-[1.3fr_1fr] [&>*]:min-w-0">
           <Reveal parallax={12}>

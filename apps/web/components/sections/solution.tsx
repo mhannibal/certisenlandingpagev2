@@ -26,6 +26,7 @@ import { Wire } from "@/components/ui/animated-beam";
 import { Reveal } from "@/components/ui/blur-text";
 import { Container, SectionHeading } from "@/components/ui/primitives";
 import { useDict } from "@/lib/i18n/provider";
+import { sectionIndex } from "@/lib/sections";
 
 function Node({
   nodeRef,
@@ -183,7 +184,7 @@ export function Solution() {
   return (
     <section id="solution" className="relative py-20 sm:py-28 lg:py-36">
       <Container>
-        <SectionHeading index="03" eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
+        <SectionHeading index={sectionIndex("solution")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
 
         <Reveal className="mt-10 sm:mt-16">
           <div

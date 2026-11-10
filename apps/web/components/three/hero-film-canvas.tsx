@@ -22,6 +22,7 @@ import {
   deployOf,
   downloadOf,
   heroLayout,
+  stampOf,
   win,
 } from "@/lib/hero-film";
 import { pointAt, smoothstep, type Flow } from "@/lib/network";
@@ -1406,6 +1407,8 @@ function bezier(out: THREE.Vector3, a: THREE.Vector3, c: THREE.Vector3, b: THREE
 }
 
 const TRAIL = 30;
+/** Vert « certifié » des paquets après le scan de l'emblème (seule couleur de la scène, demandée par Lucas). */
+const GREEN = [0.25, 1, 0.45] as const;
 
 /**
  * Paquets de conduite autonome : ils descendent du cloud sur une courbe en
@@ -1519,10 +1522,19 @@ function Packages({ progress }: { progress: MotionValue<number> }) {
       g.scale.setScalar(scale);
       g.rotation.set(0.35, t * 0.6 + i * 1.7, 0);
       const hit = scanning ? Math.exp(-((gx - g.position.x) ** 2) / 0.08) : 0;
+      // Scan par l'emblème (le plan lumineux descend sur le paquet), puis paquet certifié.
+      const [c0, c1] = stampOf(i);
+      const ck = (p - c0) / (c1 - c0);
+      const sweep = ck > 0.3 && ck < 0.95 ? Math.sin(Math.PI * clamp((ck - 0.3) / 0.65, 0, 1)) : 0;
+      const certified = smoothstep(c1 - 0.0015, c1 + 0.001, p);
       it.face.opacity = vis * 0.8;
       it.line.opacity = vis;
-      it.line.color.setScalar(1.3 + 2 * hit);
-      it.core.opacity = vis * (0.55 + 0.45 * hit);
+      // Une fois scanné, le paquet passe au vert (certifié) et le reste jusqu'à son calculateur.
+      const grey = 1.3 + 2 * hit + 1.8 * sweep;
+      it.line.color.setRGB(lerp(grey, GREEN[0] * 2, certified), lerp(grey, GREEN[1] * 2, certified), lerp(grey, GREEN[2] * 2, certified));
+      it.core.color.setRGB(lerp(2.2, GREEN[0] * 2.4, certified), lerp(2.2, GREEN[1] * 2.4, certified), lerp(2.2, GREEN[2] * 2.4, certified));
+      it.trailMat.color.setRGB(lerp(1, GREEN[0], certified), lerp(1, GREEN[1], certified), lerp(1, GREEN[2], certified));
+      it.core.opacity = vis * (0.55 + 0.45 * Math.max(hit, sweep, certified));
       cores.current[i]?.scale.setScalar(Math.max(0.001, fill));
 
       // Traînée : les positions passées le long de la courbe.
@@ -1539,15 +1551,20 @@ function Packages({ progress }: { progress: MotionValue<number> }) {
         it.trailMat.opacity = vis * Math.sin(Math.PI * clamp(path.k, 0, 1)) * 1.2;
       }
 
-      // Onde d'atterrissage, puis halo d'attente sous le paquet.
+      // Onde d'atterrissage, puis onde du « tampon » quand l'emblème a fini de scanner le paquet.
       const lk = (p - d1) / 0.014;
+      const sk = (p - c1) / 0.012;
+      const wave = lk > 0 && lk < 1 ? lk : sk > 0 && sk < 1 ? sk : -1;
       const land = lands.current[i];
       if (land) {
-        land.visible = lk > 0 && lk < 1;
+        land.visible = wave >= 0;
         land.position.set(s[0], s[1] - 0.2, s[2]);
-        land.scale.setScalar(0.25 + lk * 0.55);
+        land.scale.setScalar(0.25 + Math.max(0, wave) * 0.55);
       }
-      it.land.opacity = lk > 0 && lk < 1 ? (1 - lk) * 0.9 : 0;
+      it.land.opacity = wave >= 0 ? (1 - wave) * 0.9 : 0;
+      // Onde du tampon en vert, onde d'atterrissage en blanc.
+      const stampWave = !(lk > 0 && lk < 1) && sk > 0 && sk < 1 ? 1 : 0;
+      it.land.color.setRGB(lerp(1.4, GREEN[0] * 1.8, stampWave), lerp(1.4, GREEN[1] * 1.8, stampWave), lerp(1.4, GREEN[2] * 1.8, stampWave));
       const pending = p > d1 && p < e0 ? smoothstep(d1, d1 + 0.01, p) * (1 - smoothstep(e0 - 0.006, e0, p)) : 0;
       const halo = halos.current[i];
       if (halo) {
@@ -1941,11 +1958,47 @@ function useLogoGeometry() {
   }, []);
 }
 
-/** Emblème du logo au-dessus de la voiture, au moment de la certification. */
+/**
+ * Scan des paquets par l'emblème, juste avant le déploiement : l'emblème glisse au-dessus
+ * de chaque paquet tour à tour ; un faisceau étroit et un plan lumineux le parcourent de
+ * haut en bas. Renvoie la position de l'emblème, l'intensité du scan et la hauteur du plan.
+ */
+function emblemScan(p: number) {
+  const [s0, s1] = FILM.stamp;
+  const n = PACKAGES.length;
+  const lead = 0.006;
+  const out = { x: 0, on: 0, y: 2.97 };
+  if (p <= s0 - lead || p >= s1 + lead) return out;
+  if (p < s0) {
+    out.x = STAGE[0]![0] * easeInOut((p - (s0 - lead)) / lead);
+    return out;
+  }
+  if (p >= s1) {
+    out.x = STAGE[n - 1]![0] * (1 - easeInOut((p - s1) / lead));
+    return out;
+  }
+  const u = ((p - s0) / (s1 - s0)) * n;
+  const i = Math.min(n - 1, Math.floor(u));
+  const k = u - i;
+  const from = STAGE[Math.max(0, i - 1)]![0];
+  out.x = lerp(from, STAGE[i]![0], easeInOut(clamp(k / 0.25, 0, 1)));
+  out.on = smoothstep(0.25, 0.35, k) * (1 - smoothstep(0.9, 1, k));
+  out.y = 2.97 - 0.42 * clamp((k - 0.32) / 0.56, 0, 1);
+  return out;
+}
+
+/** Emblème du logo au-dessus de la voiture, au moment de la certification : il scanne les paquets. */
 function Emblem({ progress }: { progress: MotionValue<number> }) {
   const geo = useLogoGeometry();
   const group = useRef<THREE.Group>(null);
   const spin = useRef<THREE.Group>(null);
+  const beam = useRef<THREE.Mesh>(null);
+  const scan = useRef<THREE.Group>(null);
+  const scanGeo = useMemo(() => {
+    const plane = new THREE.PlaneGeometry(0.46, 0.46);
+    plane.rotateX(-Math.PI / 2);
+    return { plane, edges: new THREE.EdgesGeometry(plane) };
+  }, []);
   const mats = useMemo(
     () => ({
       metal: new THREE.MeshStandardMaterial({
@@ -1966,11 +2019,22 @@ function Emblem({ progress }: { progress: MotionValue<number> }) {
         depthWrite: false,
         side: THREE.DoubleSide,
       }),
+      scanFill: new THREE.MeshBasicMaterial({
+        color: glow(1.4),
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthTest: false,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      }),
+      scanEdge: new THREE.LineBasicMaterial({ color: glow(2.2), transparent: true, opacity: 0, depthTest: false, depthWrite: false, toneMapped: false }),
     }),
     [],
   );
   const S = 0.042;
-  // Au-dessus des paquets en attente : le rai de l'emblème les « tamponne » au passage.
+  // Au-dessus des paquets en attente, qu'il scanne un à un avant le déploiement.
   const Y = 4.0;
   useFrame((state) => {
     const p = progress.get();
@@ -1987,7 +2051,18 @@ function Emblem({ progress }: { progress: MotionValue<number> }) {
     mats.metal.opacity = vis;
     mats.check.opacity = vis;
     mats.ring.opacity = vis;
-    mats.beam.opacity = vis * 0.035;
+    // Scan : l'emblème suit les paquets, faisceau étroit et plan lumineux qui descend.
+    const sc = emblemScan(p);
+    g.position.x = sc.x;
+    const on = vis * sc.on;
+    mats.beam.opacity = on * 0.16;
+    mats.scanFill.opacity = on * 0.16;
+    mats.scanEdge.opacity = on;
+    if (beam.current) beam.current.visible = on > 0.002;
+    if (scan.current) {
+      scan.current.visible = on > 0.002;
+      scan.current.position.y = sc.y - g.position.y;
+    }
   });
   return (
     <group ref={group} position={[0, Y, 0]} visible={false}>
@@ -2002,9 +2077,15 @@ function Emblem({ progress }: { progress: MotionValue<number> }) {
           <torusGeometry args={[0.82, 0.012, 8, 128]} />
         </mesh>
       </group>
-      <mesh position={[0, -1.55, 0]} material={mats.beam}>
-        <cylinderGeometry args={[0.35, 2.4, 2.5, 48, 1, true]} />
+      {/* Faisceau du scan : du bas de l'emblème jusqu'au paquet scanné */}
+      <mesh ref={beam} position={[0, -1.01, 0]} material={mats.beam} renderOrder={10} visible={false}>
+        <cylinderGeometry args={[0.05, 0.3, 0.78, 32, 1, true]} />
       </mesh>
+      {/* Plan lumineux qui parcourt le paquet de haut en bas */}
+      <group ref={scan} visible={false}>
+        <mesh geometry={scanGeo.plane} material={mats.scanFill} renderOrder={16} />
+        <lineSegments geometry={scanGeo.edges} material={mats.scanEdge} renderOrder={16} />
+      </group>
     </group>
   );
 }

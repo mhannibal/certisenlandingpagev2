@@ -3,7 +3,8 @@ const en = {
   meta: {
     title: "CertiSen · Formal certification for TSN networks",
     description:
-      "CertiSen is the timing formal verification layer for software-defined vehicles: AI proposes TSN configurations, machine-checked proofs certify them, after every OTA update.",
+      "Continuous formal verification for software-defined vehicles: timing safety and cybersecurity proven with mathematical proofs after every OTA update.",
+    keywords: ["CertiSen", "formal verification", "TSN", "Time-Sensitive Networking", "IEEE 802.1Qbv", "IEEE 802.1AS", "software-defined vehicle", "SDV", "OTA update", "timing safety", "automotive cybersecurity", "Rocq", "machine-checked proofs", "ASIL-D", "Inria"],
   },
   loader: {
     steps: {
@@ -28,7 +29,7 @@ const en = {
     badge: "Selected for the Pionniers de l'IA program",
     title1: "Every millisecond,",
     title2: "proven.",
-    lead: "CertiSen is the timing formal verification layer for software-defined vehicles. AI proposes TSN network configurations; machine-checked proofs certify them, after every OTA update.",
+    lead: "CertiSen is the continuous formal verification layer for software-defined vehicles. We guarantee timing safety and cybersecurity after every OTA update with mathematical proofs.",
     cta: "Request a demo",
     secondary: "How it works",
     facts: [
@@ -235,10 +236,13 @@ const en = {
   heroFilm: {
     label: "From the factory to the road, certified by CertiSen",
     scroll: "Scroll to start",
+    autoplay: "Autoplay · scroll to take over",
+    resume: "Autoplay",
+    resumeShort: "Autoplay",
     hint: "Click a point to see what it is",
     showDetails: "Details",
     hideDetails: "Hide details",
-    lead: "CertiSen is the timing formal verification layer for [[software-defined vehicles (SDV)]]. AI proposes TSN network configurations; machine-checked proofs certify them [[after every OTA update]].",
+    lead: "CertiSen is the continuous formal verification layer for [[software-defined vehicles]]. We guarantee timing safety and cybersecurity [[after every OTA update]] with mathematical proofs.",
     chapters: ["Assembly", "OTA update", "Certification", "Deployment", "Timing safety", "Deadlines", "Monitoring", "Cybersecurity", "Latency", "On the road"],
     assembly: {
       eyebrow: "Manufacturer line",
