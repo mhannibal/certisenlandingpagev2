@@ -44,7 +44,9 @@ import { LogoMark } from "@/components/logo";
 import { useLoaderSignal, useReady } from "@/components/loader";
 import { scrollToY } from "@/components/smooth-scroll";
 import { WebGLGuard } from "@/components/three/webgl-guard";
-import { PrimaryButton, SecondaryButton, StatusDot } from "@/components/ui/primitives";
+import { FlowButton } from "@/components/ui/flow-button";
+import { StatusDot } from "@/components/ui/primitives";
+import { RippleButton } from "@/components/ui/ripple-button";
 import {
   FILM,
   FLOWS,
@@ -737,10 +739,9 @@ function Finale({ progress }: { progress: MotionValue<number> }) {
           <span className="text-muted">{t.title2}</span>
         </h2>
         <p className="mt-4 max-w-md text-muted">{t.text}</p>
-        <PrimaryButton href="#contact" className="pointer-events-auto mt-8">
+        <FlowButton href="#contact" className="pointer-events-auto mt-8">
           {t.cta}
-          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-        </PrimaryButton>
+        </FlowButton>
       </motion.div>
     </div>
   );
@@ -891,13 +892,10 @@ function IntroOverlay({ intro }: { intro: MotionValue<number> }) {
               <Marked text={d.heroFilm.lead ?? h.lead} />
             </motion.p>
             <motion.div variants={INTRO_ITEM} className="pointer-events-auto mt-6 flex flex-wrap items-center gap-3 sm:mt-9">
-              <PrimaryButton href="#contact">
-                {h.cta}
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </PrimaryButton>
-              <SecondaryButton href="#solution">
+              <FlowButton href="#contact">{h.cta}</FlowButton>
+              <RippleButton href="#solution">
                 <StatusDot /> {h.secondary}
-              </SecondaryButton>
+              </RippleButton>
             </motion.div>
             {/* Repères clés : niveau de confiance, premier périmètre, preuves */}
             <motion.dl
@@ -1025,41 +1023,28 @@ function useScrollIdle(ms = 1400) {
 }
 
 /**
- * Bouton « lecture automatique », en bas à droite pendant le film. Il apparaît quand la
- * lecture automatique est arrêtée ET que le visiteur ne fait plus défiler (entrée en
- * douceur, deux ondes autour du bouton) ; il disparaît dès qu'il refait défiler. Un clic
- * relance la lecture depuis l'endroit où l'on est. Sur mobile, il se place au-dessus du panneau.
+ * Bouton « lecture automatique », en bas à droite pendant le film (bouton Flow, comme le
+ * final) : il apparaît quand la lecture automatique est arrêtée ET que le visiteur ne fait
+ * plus défiler, disparaît dès qu'il refait défiler ; un clic relance la lecture depuis
+ * l'endroit où l'on est. Sur mobile, il se place au-dessus du panneau.
  */
 function AutoplayButton({ show, label, short, onClick }: { show: boolean; label: string; short: string; onClick: () => void }) {
   return (
     <AnimatePresence>
       {show ? (
-        <motion.button
+        <motion.div
           key="autoplay"
-          type="button"
-          aria-label={label}
-          title={label}
-          onClick={onClick}
-          initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
-          transition={{ duration: 0.45, ease: EASE }}
-          whileTap={{ scale: 0.95 }}
-          // Même pastille que le sélecteur de langue de la barre (bordure fine, texte gris qui
-          // s'éclaire au survol), sur fond verre pour rester lisible au-dessus de la scène 3D.
-          className="group absolute bottom-[calc(var(--hero-panel,0px)_+_0.75rem)] right-3 z-20 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-line-2 bg-ink/70 px-3.5 text-muted backdrop-blur-xl transition-colors duration-300 hover:border-subtle hover:text-fg md:bottom-14 md:right-6"
+          initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
+          // Filtre retiré à la fin : sinon le flou d'arrière-plan du bouton ne verrait plus la scène.
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
+          exit={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="absolute bottom-[calc(var(--hero-panel,0px)_+_0.75rem)] right-3 z-20 md:bottom-14 md:right-6"
         >
-          {/* Onde sur le contour à l'apparition, deux fois, pour attirer l'œil sans insister */}
-          <motion.span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-full border border-fg/60"
-            initial={{ scale: 1, opacity: 0.7 }}
-            animate={{ scale: 1.18, opacity: 0 }}
-            transition={{ duration: 1.1, ease: "easeOut", repeat: 1, repeatDelay: 0.3, delay: 0.35 }}
-          />
-          <Play className="size-3 shrink-0 fill-current text-fg" strokeWidth={2.2} />
-          <span className="whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.14em]">{short}</span>
-        </motion.button>
+          <FlowButton onClick={onClick} icon={Play} filled aria-label={label} title={label}>
+            {short}
+          </FlowButton>
+        </motion.div>
       ) : null}
     </AnimatePresence>
   );
@@ -1080,7 +1065,10 @@ export function HeroFilm() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.6 });
   // Le début du défilement joue l'intro, la suite joue le film.
+  // Pendant l'intro (titre, boutons, repères), le bouton « Lecture auto » ne s'affiche pas : il les recouvrirait.
+  const [inIntro, setInIntro] = useState(true);
   const intro = useTransform(progress, [0, INTRO], [0, 1]);
+  useMotionValueEvent(intro, "change", (v) => setInIntro((prev) => (prev === v < 0.6 ? prev : v < 0.6)));
   const film = useTransform(progress, [INTRO, 1], [0, 1]);
   const [atEnd, setAtEnd] = useState(false);
   useMotionValueEvent(film, "change", (v) => setAtEnd((prev) => (prev === v > 0.985 ? prev : v > 0.985)));
@@ -1143,7 +1131,7 @@ export function HeroFilm() {
         </motion.div>
 
         <Chapters progress={film} intro={intro} section={ref} />
-        <AutoplayButton show={ready && !autoplay && !atEnd && idle} label={t.resume} short={t.resumeShort} onClick={resume} />
+        <AutoplayButton show={ready && !autoplay && !atEnd && !inIntro && idle} label={t.resume} short={t.resumeShort} onClick={resume} />
         <div className="absolute inset-x-0 bottom-0 h-0.5 bg-line md:hidden">
           <motion.div style={{ scaleX: bar }} className="h-full origin-left bg-fg" />
         </div>

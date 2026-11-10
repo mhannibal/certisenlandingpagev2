@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Écran assez grand pour le pied de page « rideau » : fixé sous la page, il se dévoile au défilement. */
+/* Écran assez grand pour le pied de page « rideau » : fixé sous la page, il se découvre au défilement. */
 @custom-variant tall (@media (min-width: 1024px) and (min-height: 760px));
 
 /*
@@ -36,6 +36,8 @@
   --animate-cta-ring: cta-ring 4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
   --animate-cta-shine: cta-shine 4s ease-in-out infinite;
   --animate-cta-arrow: cta-arrow 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+  /* Onde au clic du bouton Ripple (d'après Magic UI, MIT) */
+  --animate-rippling: rippling var(--duration, 600ms) ease-out;
   /* Pied de page : aurore qui respire, logo qui bat. */
   --animate-footer-breathe: footer-breathe 8s ease-in-out infinite alternate;
   --animate-footer-heartbeat: footer-heartbeat 2.2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
@@ -63,6 +65,16 @@
     }
     30% {
       transform: scale(1);
+    }
+  }
+
+  @keyframes rippling {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
     }
   }
 
