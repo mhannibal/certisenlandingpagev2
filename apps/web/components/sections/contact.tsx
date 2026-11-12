@@ -502,7 +502,7 @@ function FooterWordmark() {
 
 /**
  * Adresse e-mail du pied de page : un clic la copie dans le presse-papiers (pas de lien mailto,
- * sur tous les écrans). L'icône copier bascule en coche et une bulle « Copié ! » apparaît.
+ * sur tous les écrans) et une bulle « Copié ! » apparaît. Sans icône copier (demande de Lucas, 12/11).
  */
 function FooterEmail() {
   const t = useDict().contact;
@@ -520,27 +520,9 @@ function FooterEmail() {
       type="button"
       onClick={onCopy}
       aria-label={`${t.copyEmail} : ${EMAIL}`}
-      className="group relative inline-flex cursor-copy items-center gap-1.5 transition-colors hover:text-fg"
+      className="relative inline-flex cursor-copy items-center transition-colors hover:text-fg"
     >
       {EMAIL}
-      <span aria-hidden className="relative inline-grid size-3.5 place-items-center overflow-hidden">
-        <AnimatePresence mode="popLayout" initial={false}>
-          <m.span
-            key={copied ? "ok" : "copy"}
-            initial={{ y: 10, opacity: 0, scale: 0.6 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: -10, opacity: 0, scale: 0.6 }}
-            transition={{ type: "spring", stiffness: 420, damping: 26 }}
-            className="grid place-items-center"
-          >
-            {copied ? (
-              <Check className="size-3.5 text-fg" strokeWidth={2.6} />
-            ) : (
-              <Copy className="size-3 text-subtle transition-colors group-hover:text-fg" />
-            )}
-          </m.span>
-        </AnimatePresence>
-      </span>
       {/* Bulle « Copié ! » au-dessus de l'adresse */}
       <span aria-hidden className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2">
         <AnimatePresence>
@@ -698,11 +680,20 @@ export function Footer() {
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-subtle">{t.addressTitle}</p>
             <address className="mt-2 text-[12.5px] not-italic leading-relaxed text-muted sm:mt-3 sm:text-sm">
-              {t.address.map((line, i) => (
-                <span key={i} className="block">
-                  {line}
-                </span>
-              ))}
+              {/* Clic : Google Maps dans un nouvel onglet (sans icône, demande de Lucas). */}
+              <a
+                href={MAPS_URL}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${t.address.join(", ")}, ${dict.contact.openMaps}`}
+                className="transition-colors hover:text-fg"
+              >
+                {t.address.map((line, i) => (
+                  <span key={i} className="block">
+                    {line}
+                  </span>
+                ))}
+              </a>
             </address>
           </div>
           <div>
