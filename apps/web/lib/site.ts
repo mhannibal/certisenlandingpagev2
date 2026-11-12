@@ -14,6 +14,16 @@ export const LINKEDIN_URL = "https://www.linkedin.com/company/certisen";
 export const POSTAL_ADDRESS = "Inria Grenoble, 655 avenue de l'Europe, 38330 Montbonnot-Saint-Martin, France";
 /** Adresse sur Google Maps (format officiel « Maps URLs » : recherche par adresse). */
 export const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(POSTAL_ADDRESS)}`;
+/**
+ * Adresse sur Gaode (高德地图) pour la version chinoise (Lucas, 12/11/2026). API URI officielle
+ * « marker » : un repère posé sur les coordonnées du bâtiment Inria (OpenStreetMap : 45,2183 N,
+ * 5,8064 E, en WGS 84), sans connexion. La recherche par texte de Gaode demande un compte.
+ */
+export const AMAP_URL = `https://uri.amap.com/marker?position=5.8064,45.2183&name=${encodeURIComponent(
+  "Inria 格勒诺布尔中心",
+)}&coordinate=wgs84&callnative=0`;
+/** Carte de l'adresse selon la langue : Gaode en chinois, Google Maps sinon. */
+export const mapsUrl = (locale: Locale) => (locale === "zh" ? AMAP_URL : MAPS_URL);
 
 /** Codes de langue Open Graph. */
 export const OG_LOCALE: Record<Locale, string> = { en: "en_US", fr: "fr_FR", zh: "zh_CN" };

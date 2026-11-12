@@ -3,10 +3,10 @@ import type { Dictionary } from "./en";
 /** Chinois simplifié. Les montants utilisent les unités chinoises (万, 亿). */
 const zh: Dictionary = {
   meta: {
-    title: "CertiSen · TSN 网络形式化认证",
+    title: "CertiSen · 软件定义汽车的持续保障",
     description:
-      "面向软件定义汽车的持续形式化验证：每次 OTA 升级后，以数学证明保障时间安全与网络安全。",
-    keywords: ["CertiSen", "形式化验证", "TSN", "时间敏感网络", "IEEE 802.1Qbv", "IEEE 802.1AS", "软件定义汽车", "SDV", "OTA 升级", "时间安全", "汽车网络安全", "Rocq", "形式化证明", "ASIL-D", "Inria"],
+      "软件定义汽车的持续保障：每次 OTA 升级后，以形式化证明保障车载 TSN 网络的时间安全与网络安全。",
+    keywords: ["CertiSen", "持续安全保障", "形式化验证", "TSN", "时间敏感网络", "IEEE 802.1Qbv", "IEEE 802.1AS", "软件定义汽车", "SDV", "OTA 升级", "时间安全", "汽车网络安全", "运行时监控", "Rocq", "形式化证明", "Inria"],
   },
   loader: {
     label: "正在加载 3D 场景",
@@ -209,7 +209,7 @@ const zh: Dictionary = {
     linkedin: "CertiSen 领英主页",
     copyEmail: "复制邮箱地址",
     copied: "已复制",
-    openMaps: "在 Google 地图中打开",
+    openMaps: "在高德地图中打开",
     copyAddress: "复制地址",
     address: "655 av. de l'Europe, 38330 Montbonnot-Saint-Martin, 法国",
     form: {

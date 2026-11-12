@@ -26,14 +26,12 @@ import { BlurText, Reveal } from "@/components/ui/blur-text";
 import { BrandLogo, LOGOS } from "@/components/ui/brand-logo";
 import SocialButton, { LinkedinIcon, type ShareAction } from "@/components/ui/social-button";
 import { copyText } from "@/lib/copy-text";
-import { MAPS_URL, POSTAL_ADDRESS } from "@/lib/site";
+import { POSTAL_ADDRESS, mapsUrl } from "@/lib/site";
 import { Container, SectionLabel } from "@/components/ui/primitives";
 import { useDict, useI18n } from "@/lib/i18n/provider";
-import { sectionIndex } from "@/lib/sections";
+import { CONTACT_FORM, sectionIndex } from "@/lib/sections";
 
 const EMAIL = "certisen@inria.fr";
-/** Formulaire de contact : désactivé le 10/11/2026 (Lucas) ; l'e-mail et LinkedIn restent. */
-const CONTACT_FORM = false;
 const LINKEDIN = "https://www.linkedin.com/company/certisen";
 
 function Field({
@@ -201,7 +199,8 @@ function CopyEmail() {
  * comme l'e-mail). Sur écran tactile (pas de survol), le rond montre directement l'icône copier.
  */
 function AddressRow() {
-  const t = useDict().contact;
+  const { dict, locale } = useI18n();
+  const t = dict.contact;
   const [copied, setCopied] = useState(false);
   const timer = useRef<number>(0);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -219,7 +218,7 @@ function AddressRow() {
       <span className="pointer-events-none absolute bottom-0 left-0 h-px w-full origin-left scale-x-0 bg-fg transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100" />
       {/* Lien étiré : un clic n'importe où sur la ligne ouvre Google Maps. */}
       <a
-        href={MAPS_URL}
+        href={mapsUrl(locale)}
         target="_blank"
         rel="noreferrer"
         aria-label={`${t.address}, ${t.openMaps}`}
@@ -682,7 +681,7 @@ export function Footer() {
             <address className="mt-2 text-[12.5px] not-italic leading-relaxed text-muted sm:mt-3 sm:text-sm">
               {/* Clic : Google Maps dans un nouvel onglet (sans icône, demande de Lucas). */}
               <a
-                href={MAPS_URL}
+                href={mapsUrl(locale)}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`${t.address.join(", ")}, ${dict.contact.openMaps}`}

@@ -1,10 +1,10 @@
 /** Dictionnaire de référence (anglais). Les autres langues doivent avoir la même forme. */
 const en = {
   meta: {
-    title: "CertiSen · Formal certification for TSN networks",
+    title: "CertiSen · Continuous Assurance for Software-Defined Vehicles",
     description:
-      "Continuous formal verification for software-defined vehicles: timing safety and cybersecurity proven with mathematical proofs after every OTA update.",
-    keywords: ["CertiSen", "formal verification", "TSN", "Time-Sensitive Networking", "IEEE 802.1Qbv", "IEEE 802.1AS", "software-defined vehicle", "SDV", "OTA update", "timing safety", "automotive cybersecurity", "Rocq", "machine-checked proofs", "ASIL-D", "Inria"],
+      "Continuous assurance for software-defined vehicles: timing safety and cybersecurity of in-vehicle TSN networks, formally proven after every OTA update.",
+    keywords: ["CertiSen", "continuous safety assurance", "formal verification", "TSN", "Time-Sensitive Networking", "IEEE 802.1Qbv", "IEEE 802.1AS", "software-defined vehicle", "SDV", "OTA update", "timing safety", "automotive cybersecurity", "runtime monitoring", "Rocq", "machine-checked proofs", "Inria"],
   },
   loader: {
     label: "Loading the 3D scene",

@@ -2,10 +2,10 @@ import type { Dictionary } from "./en";
 
 const fr: Dictionary = {
   meta: {
-    title: "CertiSen · Certification formelle des réseaux TSN",
+    title: "CertiSen · Assurance continue des véhicules définis par logiciel",
     description:
-      "Vérification formelle continue pour les véhicules définis par logiciel : sûreté temporelle et cybersécurité prouvées après chaque mise à jour OTA.",
-    keywords: ["CertiSen", "vérification formelle", "TSN", "Time-Sensitive Networking", "IEEE 802.1Qbv", "IEEE 802.1AS", "véhicule défini par logiciel", "SDV", "mise à jour OTA", "sûreté temporelle", "cybersécurité automobile", "Rocq", "preuve formelle", "ASIL-D", "Inria"],
+      "Assurance continue des véhicules définis par logiciel : sûreté temporelle et cybersécurité des réseaux TSN embarqués, prouvées après chaque mise à jour OTA.",
+    keywords: ["CertiSen", "assurance de sûreté continue", "vérification formelle", "TSN", "Time-Sensitive Networking", "IEEE 802.1Qbv", "IEEE 802.1AS", "véhicule défini par logiciel", "SDV", "mise à jour OTA", "sûreté temporelle", "cybersécurité automobile", "surveillance à l'exécution", "Rocq", "preuve formelle", "Inria"],
   },
   loader: {
     label: "Chargement de la scène 3D",

@@ -19,15 +19,8 @@ import { Reveal, useNarrow } from "@/components/ui/blur-text";
 import { Container, SectionHeading, SpotlightCard } from "@/components/ui/primitives";
 import { useDict } from "@/lib/i18n/provider";
 import { OtaVisual } from "./ota-visual";
-import { sectionIndex } from "@/lib/sections";
+import { SHOW_AI_DESIGN, SHOW_CYBER, sectionIndex } from "@/lib/sections";
 
-/**
- * Cartes « Optimisation par IA » et « Conception visuelle » désactivées le 10/11/2026 (Lucas).
- * Pour les réactiver, reprendre aussi la disposition du bento à 6 cartes (commit 922ee27).
- */
-const SHOW_AI_DESIGN = false;
-/** Carte « Cybersécurité » : désactivée le 12/11/2026 (Lucas), code conservé. */
-const SHOW_CYBER = false;
 
 /* ---------------- Preuve Rocq qui s'écrit ---------------- */
 const PROOF: { k: string; r: string; dim?: boolean }[] = [

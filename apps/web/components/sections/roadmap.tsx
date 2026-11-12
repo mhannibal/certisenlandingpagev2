@@ -7,15 +7,11 @@ import { Container, SectionHeading } from "@/components/ui/primitives";
 import { useDict } from "@/lib/i18n/provider";
 import { sectionIndex } from "@/lib/sections";
 
-
-
-/** Étapes masquées (rang dans la liste des dictionnaires). */
-const HIDDEN_STEPS = new Set([1]);
-
 export function Roadmap() {
   const t = useDict().roadmap;
-  // Étape 2 (« Mai 2025 · Faisabilité démontrée ») désactivée le 10/11/2026 (Lucas).
-  const STEPS = t.steps.filter((_, i) => !HIDDEN_STEPS.has(i));
+  // Les étapes masquées (HIDDEN_ROADMAP_STEPS, lib/sections.ts) sont déjà retirées du dictionnaire
+  // envoyé au navigateur (lib/i18n/client-dictionary.ts).
+  const STEPS = t.steps;
   const ref = useRef<HTMLOListElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 75%", "end 55%"] });
   const scaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);

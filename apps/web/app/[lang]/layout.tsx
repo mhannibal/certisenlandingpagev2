@@ -5,6 +5,7 @@ import "lenis/dist/lenis.css";
 import "../globals.css";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { DEFAULT_LOCALE, LOCALES, LOCALE_META, hasLocale } from "@/lib/i18n/config";
+import { clientDictionary } from "@/lib/i18n/client-dictionary";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { I18nProvider } from "@/lib/i18n/provider";
 import { CONTACT_EMAIL, LINKEDIN_URL, OG_LOCALE, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -120,7 +121,8 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
           // Échappement de « < » (recommandation Next.js contre l'injection de balises).
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(lang, dict.meta.description)).replace(/</g, "\\u003c") }}
         />
-        <I18nProvider locale={lang} dict={dict}>
+        {/* Le navigateur ne reçoit que les textes affichés (rien des éléments désactivés). */}
+        <I18nProvider locale={lang} dict={clientDictionary(dict)}>
           <SmoothScroll>{children}</SmoothScroll>
         </I18nProvider>
       </body>
