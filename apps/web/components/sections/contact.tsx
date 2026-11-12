@@ -160,11 +160,15 @@ function CopyEmail() {
         </span>
         {EMAIL}
       </span>
+      {/* Zone d'annonce permanente : les lecteurs d'écran entendent « Copié ! » au clic. */}
+      <span role="status" className="sr-only">
+        {copied ? t.copied : ""}
+      </span>
       <span className="relative mr-1 flex items-center gap-2.5">
         <AnimatePresence>
           {copied ? (
             <motion.span
-              role="status"
+              aria-hidden
               initial={{ opacity: 0, x: 8, filter: "blur(4px)" }}
               animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, x: 8, filter: "blur(4px)" }}

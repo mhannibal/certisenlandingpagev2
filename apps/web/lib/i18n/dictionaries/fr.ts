@@ -8,6 +8,7 @@ const fr: Dictionary = {
     keywords: ["CertiSen", "vérification formelle", "TSN", "Time-Sensitive Networking", "IEEE 802.1Qbv", "IEEE 802.1AS", "véhicule défini par logiciel", "SDV", "mise à jour OTA", "sûreté temporelle", "cybersécurité automobile", "Rocq", "preuve formelle", "ASIL-D", "Inria"],
   },
   loader: {
+    label: "Chargement de la scène 3D",
     steps: {
       page: "Page",
       fonts: "Polices",
@@ -19,6 +20,7 @@ const fr: Dictionary = {
     ready: "Prêt",
   },
   nav: {
+    skip: "Aller au contenu",
     links: { problem: "Problème", solution: "Solution", platform: "Plateforme", action: "En action", journey: "Parcours" },
     contact: "Nous contacter",
     home: "CertiSen, accueil",
@@ -28,16 +30,12 @@ const fr: Dictionary = {
   },
   hero: {
     badge: "Sélectionné au programme Pionniers de l'IA",
-    title1: "Chaque milliseconde,",
-    title2: "prouvée.",
+    title1: "L'intelligence derrière",
+    title2: "les véhicules de demain.",
     lead: "CertiSen est la couche de vérification formelle continue pour les véhicules définis par logiciel. On garantit la sûreté temporelle et la cybersécurité après chaque mise à jour OTA avec des preuves mathématiques.",
     cta: "Demander une démonstration",
     secondary: "Comment ça marche",
-    facts: [
-      { k: "Niveau de confiance", v: "ASIL-D" },
-      { k: "Premier périmètre", v: "IEEE 802.1Qbv" },
-      { k: "Preuves", v: "Rocq, vérifiées par machine" },
-    ],
+    facts: ["Ingénierie native IA", "Vérification formelle", "Assurance de sûreté continue"],
   },
   trust: {
     label: ["Né à l'Inria Grenoble", "sur les standards du temps réel"],
@@ -96,10 +94,10 @@ const fr: Dictionary = {
   },
   solution: {
     eyebrow: "La solution",
-    title: "Une couche de vérification formelle,",
-    accent: "continue.",
+    title: "La couche d'assurance continue",
+    accent: "des véhicules définis par logiciel.",
     description:
-      "CertiSen s'insère entre vos outils et le véhicule : chaque configuration TSN est certifiée par des preuves vérifiées par machine, avant le déploiement puis après chaque mise à jour.",
+      "CertiSen transforme les exigences critiques de temps et de cybersécurité en garanties prouvées mathématiquement et vérifiées par machine, de la conception initiale au déploiement, puis après chaque mise à jour OTA.",
     inputs: "Entrées",
     outputs: "Sorties",
     nodes: {
@@ -118,9 +116,9 @@ const fr: Dictionary = {
   features: {
     eyebrow: "La plateforme",
     goTo: "Aller à la diapositive",
-    title: "De la conception au déploiement,",
-    accent: "un cycle de vie certifié.",
-    description: "Performance déterministe et cybersécurité réunies, pour des réseaux TSN au niveau de confiance ASIL-D.",
+    title: "De la première conception à chaque mise à jour.",
+    accent: "Vérifié en continu.",
+    description: "Sûreté temporelle et cybersécurité, garanties par la vérification formelle.",
     items: {
       proof: { title: "Certification formelle", text: "Spécifier les protocoles TSN et prouver la correction de chaque configuration, avec des preuves vérifiées par machine." },
       ai: { title: "Optimisation par IA", text: "Génération de configurations TSN pilotée par l'IA (priorités, chemins, listes de portes), adossée à un certificateur léger." },
@@ -226,7 +224,7 @@ const fr: Dictionary = {
     },
   },
   footer: {
-    tagline: "Certification formelle des réseaux TSN pour les véhicules définis par logiciel.",
+    tagline: "Bâtir la confiance dans les véhicules définis par logiciel",
     fundedBy: "Financé par",
     addressTitle: "Adresse",
     address: ["Inria Grenoble", "655 avenue de l'Europe", "38330 Montbonnot-Saint-Martin", "France"],
@@ -291,7 +289,7 @@ const fr: Dictionary = {
       rows: ["Radar → frein", "Caméra → calculateur", "Lidar → calculateur", "Calculateur → frein arrière"],
     },
     monitor: {
-      title: "Paramètres surveillés",
+      title: "Surveillance à l'exécution",
       text: "En service, CertiSen surveille les paramètres sur lesquels repose la preuve.",
       switching: "délai de commutation",
       sync: "précision de synchro",
@@ -330,9 +328,9 @@ const fr: Dictionary = {
       mean: "Moyenne",
     },
     finale: {
-      title1: "Chaque milliseconde,",
-      title2: "prouvée.",
-      text: "De la chaîne d'assemblage à chaque route : re-certifié après chaque mise à jour OTA.",
+      title1: "Chaque milliseconde.",
+      title2: "Mathématiquement prouvée.",
+      text: "De l'usine à chaque route. Vérifié après chaque mise à jour OTA.",
       cta: "Demander une démonstration",
     },
   },

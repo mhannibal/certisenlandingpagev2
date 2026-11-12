@@ -2,11 +2,10 @@
 
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { ArrowUpRight, Check, ChevronDown, Globe } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Logo } from "@/components/logo";
 import { LOCALES, LOCALE_COOKIE, LOCALE_META, type Locale } from "@/lib/i18n/config";
 import { useI18n } from "@/lib/i18n/provider";
-import { useReady } from "@/components/loader";
 import { SECTIONS, type SectionKey } from "@/lib/sections";
 
 /** Change de langue : retient le choix (cookie, 1 an) puis charge la page dans cette langue. */
@@ -15,17 +14,42 @@ function switchLocale(next: Locale) {
   window.location.assign(`/${next}${window.location.hash}`);
 }
 
-function LanguageMenu({ compact = false }: { compact?: boolean }) {
+/** Largeur du sélecteur de langue ouvert. */
+const LANG_PANEL_W = 188;
+
+/**
+ * Sélecteur de langue : le bouton s'étire et devient le panneau (vers la gauche et vers le bas),
+ * puis les langues apparaissent en cascade. Les langues sont de vrais liens (/en, /fr, /zh)
+ * avec leur langue déclarée : lisibles par les moteurs de recherche et les lecteurs d'écran.
+ */
+function LanguageMenu() {
   const { locale, dict } = useI18n();
   const [open, setOpen] = useState(false);
+  const [btnW, setBtnW] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const listId = useId();
+
+  // Largeur du bouton fermé : point de départ de l'étirement.
+  useEffect(() => {
+    const el = btn.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setBtnW(el.offsetWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      btn.current?.focus();
+    };
     window.addEventListener("pointerdown", onDown);
     window.addEventListener("keydown", onKey);
     return () => {
@@ -34,54 +58,103 @@ function LanguageMenu({ compact = false }: { compact?: boolean }) {
     };
   }, [open]);
 
+  // Flèches haut / bas entre les langues.
+  const onListKey = (e: ReactKeyboardEvent<HTMLUListElement>) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const links = Array.from(list.current?.querySelectorAll<HTMLAnchorElement>("a") ?? []);
+    const i = links.indexOf(document.activeElement as HTMLAnchorElement);
+    const next = links[(i + (e.key === "ArrowDown" ? 1 : -1) + links.length) % links.length];
+    next?.focus();
+  };
+
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        aria-label={dict.nav.language}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className={`inline-flex h-9 items-center gap-1.5 rounded-full border border-line-2 px-3 text-sm text-muted transition-colors hover:border-subtle hover:text-fg ${compact ? "" : "bg-transparent"}`}
+    <div
+      ref={ref}
+      className="relative"
+      // Le focus quitte le sélecteur (Tab) : il se referme.
+      onBlur={(e) => {
+        if (open && !e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
+      }}
+    >
+      {/* Surface qui s'étire depuis le bouton jusqu'au panneau. */}
+      <motion.div
+        initial={false}
+        animate={open ? { width: LANG_PANEL_W, height: "auto" } : { width: btnW || "100%", height: 36 }}
+        transition={{ type: "spring", stiffness: 420, damping: 36, mass: 0.8 }}
+        className={`absolute right-0 top-0 z-40 overflow-hidden rounded-[18px] border transition-[background-color,border-color,box-shadow] duration-300 ${
+          open
+            ? "border-line-2 bg-card shadow-[0_18px_50px_-16px_rgb(0_0_0/0.9),inset_0_1px_0_rgb(255_255_255/0.05)]"
+            : "pointer-events-none border-transparent bg-transparent"
+        }`}
       >
-        <Globe className="size-4" strokeWidth={1.6} />
-        <span className="text-fg">{LOCALE_META[locale].short}</span>
-        <ChevronDown className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      <AnimatePresence>
-        {open ? (
-          <motion.ul
-            role="listbox"
-            aria-label={dict.nav.language}
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.15 }}
-            className="card absolute right-0 top-full z-50 mt-2 w-44 origin-top-right overflow-hidden rounded-xl p-1"
+        <div className="flex h-9 items-center pl-4">
+          <motion.span
+            aria-hidden
+            initial={false}
+            animate={open ? { opacity: 1, x: 0 } : { opacity: 0, x: 6 }}
+            transition={{ duration: 0.2, delay: open ? 0.08 : 0 }}
+            className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.16em] text-subtle"
           >
-            {LOCALES.map((l) => (
-              <li key={l}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={l === locale}
-                  onClick={() => (l === locale ? setOpen(false) : switchLocale(l))}
-                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-white/5 ${
-                    l === locale ? "text-fg" : "text-muted"
-                  }`}
-                  lang={LOCALE_META[l].htmlLang}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <span className="w-7 font-mono text-[11px] text-subtle">{LOCALE_META[l].short}</span>
-                    {LOCALE_META[l].label}
+            {dict.nav.language}
+          </motion.span>
+        </div>
+        <ul ref={list} id={listId} aria-label={dict.nav.language} inert={!open} onKeyDown={onListKey} className="p-1 pt-0.5">
+          {LOCALES.map((l, i) => (
+            <motion.li
+              key={l}
+              initial={false}
+              animate={open ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: -6, filter: "blur(4px)" }}
+              transition={{ duration: 0.22, delay: open ? 0.06 + i * 0.045 : 0 }}
+            >
+              <a
+                href={`/${l}`}
+                hrefLang={LOCALE_META[l].htmlLang}
+                lang={LOCALE_META[l].htmlLang}
+                aria-current={l === locale ? "true" : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (l === locale) setOpen(false);
+                  else switchLocale(l);
+                }}
+                className={`flex w-full items-center justify-between rounded-[12px] px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-white/5 focus-visible:bg-white/[0.08] ${
+                  l === locale ? "text-fg" : "text-muted hover:text-fg"
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <span aria-hidden className="w-7 font-mono text-[11px] text-subtle">
+                    {LOCALE_META[l].short}
                   </span>
-                  {l === locale ? <Check className="size-4" /> : null}
-                </button>
-              </li>
-            ))}
-          </motion.ul>
-        ) : null}
-      </AnimatePresence>
+                  {LOCALE_META[l].label}
+                </span>
+                {l === locale ? <Check aria-hidden className="size-4" /> : null}
+              </a>
+            </motion.li>
+          ))}
+        </ul>
+      </motion.div>
+      <button
+        ref={btn}
+        type="button"
+        aria-label={`${dict.nav.language} : ${LOCALE_META[locale].label}`}
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={(e) => {
+          const opening = !open;
+          setOpen(opening);
+          // Ouvert au clavier : le focus va sur la langue actuelle.
+          if (opening && e.detail === 0) {
+            requestAnimationFrame(() => list.current?.querySelector<HTMLAnchorElement>("[aria-current]")?.focus());
+          }
+        }}
+        className={`relative z-50 inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm text-muted transition-colors duration-300 hover:text-fg ${
+          open ? "border-transparent" : "border-line-2 hover:border-subtle"
+        }`}
+      >
+        <Globe aria-hidden className="size-4" strokeWidth={1.6} />
+        <span className="text-fg">{LOCALE_META[locale].short}</span>
+        <ChevronDown aria-hidden className={`size-3.5 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+      </button>
     </div>
   );
 }
@@ -145,7 +218,6 @@ function MenuButton({ open, label, onClick }: { open: boolean; label: string; on
 /** Barre flottante : transparente en haut de page, pilule resserrée au défilement. */
 export function Navbar() {
   const { dict } = useI18n();
-  const ready = useReady();
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -166,12 +238,15 @@ export function Navbar() {
   ].filter((l) => SECTIONS[l.key as SectionKey]);
 
   return (
-    <motion.header
-      initial={{ y: -30, opacity: 0 }}
-      animate={ready ? { y: 0, opacity: 1 } : { y: -30, opacity: 0 }}
-      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-      className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4"
-    >
+    // Entrée en CSS dès la première image : la barre n'attend ni le JavaScript ni la 3D.
+    <header className="fixed inset-x-0 top-0 z-50 flex animate-nav-in justify-center px-4 pt-4 motion-reduce:animate-none">
+      {/* Lien d'évitement : invisible, il apparaît au premier Tab et mène directement au contenu. */}
+      <a
+        href="#contenu"
+        className="sr-only rounded-full bg-fg px-4 py-2 text-sm font-medium text-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100]"
+      >
+        {dict.nav.skip}
+      </a>
       <motion.nav
         animate={{
           maxWidth: scrolled ? 960 : 1200,
@@ -257,6 +332,6 @@ export function Navbar() {
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </motion.header>
+    </header>
   );
 }

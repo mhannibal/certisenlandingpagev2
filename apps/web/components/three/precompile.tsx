@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 /**
  * Prépare la scène dès son montage, même si elle est hors écran : compile tous les
- * shaders puis calcule une image complète (post-traitement compris). Signale ensuite
+ * shaders (en parallèle si possible) puis calcule une image complète (post-traitement compris). Signale ensuite
  * la fin à l'écran de chargement. À placer en DERNIER dans le <Canvas>.
  */
 export function Precompile({ onReady }: { onReady?: () => void }) {
@@ -16,15 +16,24 @@ export function Precompile({ onReady }: { onReady?: () => void }) {
 
   useEffect(() => {
     if (!onReady) return;
-    const raf = requestAnimationFrame(() => {
+    let cancelled = false;
+    const raf = requestAnimationFrame(async () => {
       try {
-        gl.compile(scene, camera);
-        advance(performance.now());
+        // Compilation en tâche de fond (extension KHR_parallel_shader_compile) quand elle existe :
+        // la page reste réactive pendant que les shaders se préparent ; sinon, compilation directe.
+        if (typeof gl.compileAsync === "function") await gl.compileAsync(scene, camera);
+        else gl.compile(scene, camera);
+        if (!cancelled) advance(performance.now());
+      } catch {
+        /* la scène s'affichera quand même ; on ne bloque pas le chargement */
       } finally {
-        onReady();
+        if (!cancelled) onReady();
       }
     });
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
   }, [gl, scene, camera, advance, onReady]);
 
   return null;

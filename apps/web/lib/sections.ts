@@ -18,6 +18,9 @@ export const SECTIONS = {
 
 export type SectionKey = keyof typeof SECTIONS;
 
+/** Bandeau animé des logos (Inria, Rocq, IEEE, OMNeT++, INET) sous le héros. 12/11/2026 (Lucas) : désactivé. */
+export const TRUST_STRIP = false;
+
 const ORDER: SectionKey[] = ["problem", "gap", "solution", "features", "cinema", "positioning", "roadmap", "contact"];
 
 /** Numéro affiché d'une section (« 01 », « 02 »…), compté parmi les sections actives. */

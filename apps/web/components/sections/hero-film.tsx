@@ -11,7 +11,6 @@ import {
   useTime,
   useTransform,
   type MotionValue,
-  type Variants,
 } from "motion/react";
 import {
   Activity,
@@ -171,7 +170,8 @@ function StoryPanel({ progress }: { progress: MotionValue<number> }) {
   }, [h]);
   const s = steps[step]!;
   return (
-    <div className="pointer-events-none absolute inset-0 flex items-end px-3 pb-3 sm:px-8 sm:pb-24 lg:items-center lg:px-12 lg:pb-0">
+    // Masqué aux lecteurs d'écran : son contenu change au défilement. Ils lisent <FilmTranscript />.
+    <div aria-hidden className="pointer-events-none absolute inset-0 flex items-end px-3 pb-3 sm:px-8 sm:pb-24 lg:items-center lg:px-12 lg:pb-0">
       <motion.div style={{ opacity, y, visibility }} className="card w-full overflow-hidden rounded-xl sm:w-[380px] lg:w-[400px]">
         <motion.div animate={{ height: h ?? "auto" }} transition={{ duration: 0.55, ease: EASE }}>
           <div ref={inner} className="p-3.5 sm:p-4 lg:p-5">
@@ -205,7 +205,7 @@ function StoryPanel({ progress }: { progress: MotionValue<number> }) {
                 exit={{ opacity: 0, y: -8, filter: "blur(6px)" }}
                 transition={{ duration: 0.26, ease: EASE }}
               >
-                <h3 className="mt-1.5 text-base font-medium tracking-tight text-fg sm:text-lg lg:mt-3 lg:text-2xl">{s.title}</h3>
+                <p className="mt-1.5 text-base font-medium tracking-tight text-fg sm:text-lg lg:mt-3 lg:text-2xl">{s.title}</p>
                 <p className="mt-1 text-[12.5px] leading-snug text-muted lg:mt-2 lg:text-sm lg:leading-relaxed">{s.text}</p>
                 {s.body ? <div className={`mt-3 lg:mt-5 ${details ? "" : "hidden lg:block"}`}>{s.body}</div> : null}
               </motion.div>
@@ -213,6 +213,7 @@ function StoryPanel({ progress }: { progress: MotionValue<number> }) {
             {s.body ? (
               <button
                 type="button"
+                tabIndex={-1}
                 aria-expanded={details}
                 onClick={() => setDetails((v) => !v)}
                 className="pointer-events-auto mt-2 inline-flex cursor-pointer items-center gap-1 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-subtle transition-colors hover:text-fg lg:hidden"
@@ -722,6 +723,28 @@ function LatencyChart({ progress }: { progress: MotionValue<number> }) {
   );
 }
 
+/**
+ * Version texte du film, pour les lecteurs d'écran et les moteurs de recherche : toutes les
+ * étapes dans l'ordre, sous un titre de section. Invisible à l'écran (le film les montre).
+ */
+function FilmTranscript() {
+  const t = useDict().heroFilm;
+  const steps = [t.assembly, t.ota, t.inProgress, t.certified, t.deploy, t.safety, t.flows, t.monitor, t.cyber, t.latency];
+  return (
+    <div className="sr-only">
+      <h2>{t.label}</h2>
+      <ol>
+        {steps.map((st) => (
+          <li key={st.title}>
+            <h3>{st.title}</h3>
+            <p>{st.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 /* ---------------- Final ---------------- */
 function Finale({ progress }: { progress: MotionValue<number> }) {
   const t = useDict().heroFilm.finale;
@@ -733,11 +756,12 @@ function Finale({ progress }: { progress: MotionValue<number> }) {
         className="flex max-w-2xl flex-col items-center rounded-3xl bg-[radial-gradient(closest-side,rgb(10_10_10/0.8),transparent)] px-4 py-10 text-center sm:px-10 sm:py-14"
       >
         <LogoMark size={44} animate={false} className="text-fg" />
-        <h2 className="mt-6 text-[clamp(2.25rem,5vw,4rem)] font-medium leading-[1.02] tracking-[-0.04em] text-fg">
+        {/* Pas un titre : il reprend le h1 de la page (un seul titre par sujet pour le référencement). */}
+        <p className="mt-6 text-[clamp(2.25rem,5vw,4rem)] font-medium leading-[1.02] tracking-[-0.04em] text-fg">
           {t.title1}
           <br />
           <span className="text-muted">{t.title2}</span>
-        </h2>
+        </p>
         <p className="mt-4 max-w-md text-muted">{t.text}</p>
         <FlowButton href="#contact" className="pointer-events-auto mt-8">
           {t.cta}
@@ -838,10 +862,8 @@ function Marked({ text }: { text: string }) {
   );
 }
 
-const INTRO_ITEM: Variants = {
-  hidden: { opacity: 0, y: 14, filter: "blur(8px)" },
-  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.8, ease: EASE } },
-};
+/** Entrée CSS des éléments de l'intro (voir --animate-intro-in dans globals.css). */
+const ENTER = "animate-intro-in motion-reduce:animate-none";
 
 /**
  * Intro du héros : badge, titre, accroche et boutons sur la constellation du
@@ -850,8 +872,8 @@ const INTRO_ITEM: Variants = {
 function IntroOverlay({ intro }: { intro: MotionValue<number> }) {
   const d = useDict();
   const h = d.hero;
-  // Les entrées démarrent quand l'écran de chargement se lève.
-  const ready = useReady();
+  // Entrées en CSS, en cascade, dès la première image : le texte n'attend ni le JavaScript ni la 3D.
+  const delay = (i: number) => ({ animationDelay: `${i * 80}ms` });
   const input = [0, 0.3, 0.6];
   const opacity = useTransform(intro, input, [1, 1, 0]);
   const y = useTransform(intro, input, [0, 0, -40]);
@@ -866,50 +888,40 @@ function IntroOverlay({ intro }: { intro: MotionValue<number> }) {
       />
       <div className="pointer-events-none absolute inset-0 flex items-center px-6 lg:px-12">
         <motion.div style={{ opacity, y, filter, visibility }} className="mx-auto w-full max-w-[1200px]">
-          <motion.div
-            initial="hidden"
-            animate={ready ? "show" : "hidden"}
-            variants={{ show: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } } }}
-            className="max-w-3xl"
-          >
-            <motion.p
-              variants={INTRO_ITEM}
-              className="inline-flex items-center gap-3 rounded-full border border-line-2 bg-card py-1 pl-1 pr-3.5 text-xs text-muted"
+          {/* Bloc assez large pour le titre sur deux lignes (≈ 840 px à 80 px de corps) ; accroche et repères gardent leur largeur. */}
+          <div className="max-w-4xl">
+            <p
+              style={delay(0)} className={`${ENTER} inline-flex items-center gap-3 rounded-full border border-line-2 bg-card py-1 pl-1 pr-3.5 text-xs text-muted`}
             >
               <span className="rounded-full bg-fg px-2.5 py-0.5 font-medium text-ink">2026</span>
               {h.badge}
-            </motion.p>
-            <motion.h1
-              variants={INTRO_ITEM}
-              className="mt-6 text-[clamp(2.4rem,6vw,5rem)] font-medium leading-[1] tracking-[-0.045em] text-fg sm:mt-8"
+            </p>
+            <h1
+              style={delay(1)} className={`${ENTER} mt-6 text-[clamp(2.15rem,6vw,5rem)] font-medium leading-[1] tracking-[-0.045em] text-fg sm:mt-8`}
             >
               {h.title1}
               <br />
               <span className="text-subtle">{h.title2}</span>
-            </motion.h1>
-            <motion.p variants={INTRO_ITEM} className="mt-4 max-w-[34rem] text-pretty text-[15px] leading-relaxed text-muted sm:mt-6 sm:text-lg">
+            </h1>
+            <p style={delay(2)} className={`${ENTER} mt-4 max-w-[34rem] text-pretty text-[15px] leading-relaxed text-muted sm:mt-6 sm:text-lg`}>
               {/* Repli sur l'accroche d'origine si le dictionnaire chargé est plus ancien. */}
               <Marked text={d.heroFilm.lead ?? h.lead} />
-            </motion.p>
-            <motion.div variants={INTRO_ITEM} className="pointer-events-auto mt-6 flex flex-wrap items-center gap-3 sm:mt-9">
+            </p>
+            <div style={delay(3)} className={`${ENTER} pointer-events-auto mt-6 flex flex-wrap items-center gap-3 sm:mt-9`}>
               <FlowButton href="#contact">{h.cta}</FlowButton>
               <RippleButton href="#solution">
                 <StatusDot /> {h.secondary}
               </RippleButton>
-            </motion.div>
-            {/* Repères clés : niveau de confiance, premier périmètre, preuves */}
-            <motion.dl
-              variants={INTRO_ITEM}
-              className="mt-8 grid max-w-3xl grid-cols-3 border-t border-line sm:mt-16"
-            >
+            </div>
+            {/* Repères clés (sans étiquettes, demande de Lucas du 12/11) */}
+            <ul style={delay(4)} className={`${ENTER} mt-8 grid max-w-3xl grid-cols-3 border-t border-line sm:mt-16`}>
               {h.facts.map((f, i) => (
-                <div key={f.k} className={`py-3 pr-2 sm:py-5 sm:pr-6 ${i > 0 ? "border-l border-line pl-3 sm:pl-6" : ""}`}>
-                  <dt className="font-mono text-[9.5px] uppercase leading-snug tracking-[0.12em] text-subtle sm:text-[11px] sm:tracking-[0.14em]">{f.k}</dt>
-                  <dd className="mt-1 text-[13px] leading-snug text-fg sm:mt-1.5 sm:text-[15px]">{f.v}</dd>
-                </div>
+                <li key={f} className={`py-3 pr-2 text-[13px] leading-snug text-fg sm:py-5 sm:pr-6 sm:text-[15px] ${i > 0 ? "border-l border-line pl-3 sm:pl-6" : ""}`}>
+                  {f}
+                </li>
               ))}
-            </motion.dl>
-          </motion.div>
+            </ul>
+          </div>
         </motion.div>
       </div>
     </>
@@ -919,14 +931,19 @@ function IntroOverlay({ intro }: { intro: MotionValue<number> }) {
 /** Durée de la lecture automatique de tout le héros (intro comprise), et attente avant le départ. */
 const AUTOPLAY_SECONDS = 100;
 const AUTOPLAY_DELAY_MS = 1800;
-/** Touches qui font défiler la page : le visiteur reprend la main. */
-const SCROLL_KEYS = new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "]);
+/** Départ au plus tôt, compté depuis l'arrivée sur la page. */
+const AUTOPLAY_MIN_START_MS = 3200;
+/** Après un premier défilement du visiteur (peut-être involontaire), reprise de la lecture après ce délai sans mouvement. */
+const AUTOPLAY_RESUME_MS = 2000;
+/** Touches seules qui ne rendent pas la main (raccourcis en préparation) ; toute autre touche arrête la lecture. */
+const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "AltGraph", "CapsLock"]);
 
 /**
  * Lecture automatique du film à l'arrivée sur le site : la page défile seule, à vitesse
- * constante, jusqu'à la fin du héros. Dès que le visiteur fait défiler (molette, doigt,
- * clavier, barre de défilement) ou navigue (lien, chapitre), la lecture s'arrête pour de
- * bon et il pilote le film comme avant. Pas de lecture automatique si la page s'ouvre
+ * constante, jusqu'à la fin du héros. Au premier défilement du visiteur (molette, doigt,
+ * barre), la lecture se met en pause et repart 2 s après son dernier mouvement ; au
+ * suivant, elle s'arrête pour de bon. Clavier, lien ou chapitre : arrêt immédiat. Ensuite,
+ * il pilote le film au défilement comme avant. Pas de lecture automatique si la page s'ouvre
  * ailleurs qu'en haut (ancre, retour en arrière) ni si le visiteur réduit les animations.
  */
 function useAutoplay(section: RefObject<HTMLElement | null>) {
@@ -952,24 +969,62 @@ function useAutoplay(section: RefObject<HTMLElement | null>) {
       if (y >= target) return stop();
       raf = requestAnimationFrame(step);
     };
+    // Défilement du visiteur (molette, doigt, barre de défilement). La première fois, ce peut être
+    // un geste involontaire : simple pause, et la lecture repart 2 s après son dernier mouvement.
+    // La fois suivante, il a vraiment pris la main : arrêt définitif.
+    let graceUsed = false;
+    let paused = false;
+    let resumeTimer = 0;
+    const resumeAfterGrace = () => {
+      paused = false;
+      if (!active) return;
+      if (window.scrollY >= end() - 2) return stop();
+      last = 0;
+      y = window.scrollY;
+      raf = requestAnimationFrame(step);
+    };
+    const holdResume = () => {
+      window.clearTimeout(resumeTimer);
+      resumeTimer = window.setTimeout(resumeAfterGrace, AUTOPLAY_RESUME_MS);
+    };
+    const onUserScroll = () => {
+      if (!active) return;
+      // Même geste (ou son inertie) pendant la pause : la reprise est repoussée.
+      if (paused) return holdResume();
+      if (graceUsed) return stop();
+      graceUsed = true;
+      paused = true;
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+      holdResume();
+    };
+    // Pendant la pause, tout mouvement de la page (inertie du doigt ou de la molette) repousse la reprise.
+    const onScroll = () => {
+      if (paused) holdResume();
+    };
     const onKey = (e: KeyboardEvent) => {
-      if (SCROLL_KEYS.has(e.key)) stop();
+      // Clavier (Tab, flèches…) : arrêt immédiat, la page ne doit plus bouger sous le visiteur.
+      if (!MODIFIER_KEYS.has(e.key)) stop();
     };
     // Barre de défilement (clic à droite de la page) ou défilement au clic molette.
     const onPointer = (e: PointerEvent) => {
-      if (e.button === 1 || e.clientX >= document.documentElement.clientWidth) stop();
+      if (e.button === 1 || e.clientX >= document.documentElement.clientWidth) onUserScroll();
     };
     const listeners: [string, EventListener][] = [
-      ["wheel", () => stop()],
-      ["touchmove", () => stop()],
+      ["wheel", onUserScroll],
+      ["touchmove", onUserScroll],
+      ["scroll", onScroll],
       ["keydown", onKey as EventListener],
       ["pointerdown", onPointer as EventListener],
+      // Lien, chapitre, bouton : le visiteur navigue, arrêt immédiat.
       ["herofilm:user", () => stop()],
     ];
     function stop() {
       if (!active) return;
       active = false;
+      paused = false;
       window.clearTimeout(timer);
+      window.clearTimeout(resumeTimer);
       cancelAnimationFrame(raf);
       for (const [type, fn] of listeners) window.removeEventListener(type, fn);
       setPlaying(false);
@@ -978,6 +1033,7 @@ function useAutoplay(section: RefObject<HTMLElement | null>) {
     const start = (delay = 0) => {
       if (active || window.scrollY >= end() - 2) return;
       active = true;
+      paused = false;
       last = 0;
       y = window.scrollY;
       for (const [type, fn] of listeners) window.addEventListener(type, fn, { passive: true });
@@ -998,7 +1054,8 @@ function useAutoplay(section: RefObject<HTMLElement | null>) {
     if (!lenis || !ready) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (window.location.hash || window.scrollY > 4) return;
-    ctl.current?.start(AUTOPLAY_DELAY_MS);
+    // Le texte de l'intro est affiché dès l'arrivée : on laisse au moins ~3 s pour le lire avant le départ.
+    ctl.current?.start(Math.max(AUTOPLAY_DELAY_MS, AUTOPLAY_MIN_START_MS - performance.now()));
   }, [lenis, ready]);
   return { playing, resume: () => ctl.current?.start(0) };
 }
@@ -1105,9 +1162,12 @@ export function HeroFilm() {
   return (
     <section ref={ref} id="top" data-skip-on-jump aria-label={t.label} className="relative h-[1300vh]">
       <div className="sticky top-0 h-[100svh] overflow-hidden">
-        <WebGLGuard onFallback={onSceneReady} fallback={<div className="absolute inset-0 bg-dots opacity-60" />}>
-          <HeroFilmCanvas progress={film} intro={intro} markers={markers} onReady={onSceneReady} className="absolute inset-0" />
-        </WebGLGuard>
+        {/* La scène 3D apparaît en fondu derrière le texte, une fois prête (shaders compilés). */}
+        <div data-scene aria-hidden className={`absolute inset-0 ${ready ? "animate-scene-in motion-reduce:animate-none" : "opacity-0"}`}>
+          <WebGLGuard onFallback={onSceneReady} fallback={<div className="absolute inset-0 bg-dots opacity-60" />}>
+            <HeroFilmCanvas progress={film} intro={intro} markers={markers} onReady={onSceneReady} className="absolute inset-0" />
+          </WebGLGuard>
+        </div>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-ink to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-ink to-transparent" />
 
@@ -1119,15 +1179,17 @@ export function HeroFilm() {
         </motion.div>
         <NodeMarkers markers={markers} />
         <IntroOverlay intro={intro} />
+        <FilmTranscript />
         <StoryPanel progress={film} />
         <Finale progress={film} />
 
+        {/* Indication de défilement : seulement une fois la scène prête (avant, le défilement est bloqué). */}
         <motion.div
           style={{ opacity: hint }}
-          className="pointer-events-none absolute inset-x-0 bottom-20 flex flex-col items-center gap-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted"
+          className={`pointer-events-none absolute inset-x-0 bottom-20 flex flex-col items-center gap-1 px-6 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-muted ${ready ? "" : "invisible"}`}
         >
           {autoplay ? t.autoplay : t.scroll}
-          <ChevronDown className="size-4 animate-bounce" />
+          <ChevronDown aria-hidden className="size-4 animate-bounce" />
         </motion.div>
 
         <Chapters progress={film} intro={intro} section={ref} />

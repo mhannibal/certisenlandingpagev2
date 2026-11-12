@@ -10,11 +10,11 @@ import { I18nProvider } from "@/lib/i18n/provider";
 import { CONTACT_EMAIL, LINKEDIN_URL, OG_LOCALE, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const geistSans = localFont({
-  src: "../fonts/GeistVF.woff",
+  src: "../fonts/GeistVF.woff2",
   variable: "--font-geist-sans",
 });
 const geistMono = localFont({
-  src: "../fonts/GeistMonoVF.woff",
+  src: "../fonts/GeistMonoVF.woff2",
   variable: "--font-geist-mono",
 });
 

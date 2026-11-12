@@ -1,6 +1,6 @@
 "use client";
 
-import { Line } from "@react-three/drei";
+import { Line, PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Bloom, EffectComposer, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { useInView, type MotionValue } from "motion/react";
@@ -8,7 +8,8 @@ import { Check } from "lucide-react";
 import { NODE_ICON } from "./node-icons";
 import { CarBody } from "./car-body";
 import { Precompile } from "./precompile";
-import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { DPR_FLOOR, renderQuality } from "@/lib/render-quality";
 import * as THREE from "three";
 import { buildCar, type V3 } from "@/lib/car";
 import { DESIGN } from "@/lib/car-design";
@@ -461,11 +462,15 @@ export default function CarCanvas({
   const anchors = useRef<(HTMLDivElement | null)[]>([]);
   const inView = useInView(ref, { margin: "120px" });
   const visible = stage >= 1;
+  // Qualité selon l'appareil ; résolution abaissée si la fluidité chute.
+  const quality = useMemo(renderQuality, []);
+  const [dpr, setDpr] = useState<[number, number]>(quality.dpr);
+  const lower = useCallback(() => setDpr([DPR_FLOOR, DPR_FLOOR]), []);
   return (
     <div ref={ref} className={className}>
       <Canvas
         frameloop={inView ? "always" : "never"}
-        dpr={[1, 1.75]}
+        dpr={dpr}
         camera={{ position: [6.6, 2.7, 7.4], fov: 35 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
@@ -477,8 +482,9 @@ export default function CarCanvas({
         <NetworkLinks progress={progress} selected={selected} stage={stage} />
         <Packets progress={progress} />
         <Projector anchors={anchors} />
+        <PerformanceMonitor onDecline={lower} onFallback={lower} flipflops={3} />
         {/* MSAA dans le tampon du composer : arêtes nettes (carrosserie, branches de jantes, fil de fer). */}
-        <EffectComposer multisampling={4}>
+        <EffectComposer multisampling={quality.msaa}>
           {/* Seuil haut : seules les optiques rayonnent, jamais les reflets du vernis. */}
           <Bloom
             mipmapBlur

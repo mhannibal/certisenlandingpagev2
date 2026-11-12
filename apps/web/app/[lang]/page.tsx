@@ -9,23 +9,26 @@ import { Problem } from "@/components/sections/problem";
 import { Roadmap } from "@/components/sections/roadmap";
 import { Solution } from "@/components/sections/solution";
 import { TrustStrip } from "@/components/sections/trust-strip";
-import { SECTIONS } from "@/lib/sections";
+import { SECTIONS, TRUST_STRIP } from "@/lib/sections";
 
 export default function Home() {
   return (
-    <main className="relative">
+    <>
       <Navbar />
-      <HeroFilm />
-      <TrustStrip />
-      {SECTIONS.problem ? <Problem /> : null}
-      {SECTIONS.gap ? <Gap /> : null}
-      {SECTIONS.solution ? <Solution /> : null}
-      {SECTIONS.features ? <Features /> : null}
-      {SECTIONS.cinema ? <Cinema /> : null}
-      {SECTIONS.positioning ? <Positioning /> : null}
-      {SECTIONS.roadmap ? <Roadmap /> : null}
-      {SECTIONS.contact ? <Contact /> : null}
+      {/* Cible du lien d'évitement « Aller au contenu » (barre de navigation). */}
+      <main id="contenu" tabIndex={-1} className="relative outline-none">
+        <HeroFilm />
+        {TRUST_STRIP ? <TrustStrip /> : null}
+        {SECTIONS.problem ? <Problem /> : null}
+        {SECTIONS.gap ? <Gap /> : null}
+        {SECTIONS.solution ? <Solution /> : null}
+        {SECTIONS.features ? <Features /> : null}
+        {SECTIONS.cinema ? <Cinema /> : null}
+        {SECTIONS.positioning ? <Positioning /> : null}
+        {SECTIONS.roadmap ? <Roadmap /> : null}
+        {SECTIONS.contact ? <Contact /> : null}
+      </main>
       <Footer />
-    </main>
+    </>
   );
 }

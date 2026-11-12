@@ -7,6 +7,7 @@ const en = {
     keywords: ["CertiSen", "formal verification", "TSN", "Time-Sensitive Networking", "IEEE 802.1Qbv", "IEEE 802.1AS", "software-defined vehicle", "SDV", "OTA update", "timing safety", "automotive cybersecurity", "Rocq", "machine-checked proofs", "ASIL-D", "Inria"],
   },
   loader: {
+    label: "Loading the 3D scene",
     steps: {
       page: "Page",
       fonts: "Fonts",
@@ -18,6 +19,7 @@ const en = {
     ready: "Ready",
   },
   nav: {
+    skip: "Skip to content",
     links: { problem: "Problem", solution: "Solution", platform: "Platform", action: "In action", journey: "Journey" },
     contact: "Contact us",
     home: "CertiSen, home",
@@ -27,16 +29,12 @@ const en = {
   },
   hero: {
     badge: "Selected for the Pionniers de l'IA program",
-    title1: "Every millisecond,",
-    title2: "proven.",
+    title1: "The Intelligence Behind",
+    title2: "Tomorrow's Vehicles.",
     lead: "CertiSen is the continuous formal verification layer for software-defined vehicles. We guarantee timing safety and cybersecurity after every OTA update with mathematical proofs.",
     cta: "Request a demo",
     secondary: "How it works",
-    facts: [
-      { k: "Assurance level", v: "ASIL-D" },
-      { k: "First scope", v: "IEEE 802.1Qbv" },
-      { k: "Proofs", v: "Rocq, machine-checked" },
-    ],
+    facts: ["AI-Native Engineering", "Formal Verification", "Continuous Safety Assurance"],
   },
   trust: {
     label: ["Born at Inria Grenoble", "on real-time standards"],
@@ -95,10 +93,10 @@ const en = {
   },
   solution: {
     eyebrow: "The solution",
-    title: "A formal verification layer,",
-    accent: "continuous.",
+    title: "The Continuous Assurance Layer",
+    accent: "for Software-Defined Vehicles.",
     description:
-      "CertiSen sits between your tools and the vehicle: every TSN configuration is certified with machine-checked proofs, before deployment and after every update.",
+      "CertiSen transforms critical timing and cybersecurity requirements into mathematically proven, machine-verified guarantees, from initial design through deployment, and after every OTA update.",
     inputs: "Inputs",
     outputs: "Outputs",
     nodes: {
@@ -117,9 +115,9 @@ const en = {
   features: {
     eyebrow: "The platform",
     goTo: "Go to slide",
-    title: "From design to deployment,",
-    accent: "a certified lifecycle.",
-    description: "Deterministic performance and built-in cybersecurity, for TSN networks at the ASIL-D assurance level.",
+    title: "From First Design to Every Update.",
+    accent: "Continuously Verified.",
+    description: "Timing Safety and Cybersecurity, Backed by Formal Verification.",
     items: {
       proof: { title: "Formal certification", text: "Specify TSN protocols and prove every configuration correct, with machine-checked proofs." },
       ai: { title: "AI optimization", text: "AI-driven TSN configuration (priorities, paths, gate control lists), backed by a lightweight certifier." },
@@ -225,7 +223,7 @@ const en = {
     },
   },
   footer: {
-    tagline: "Formal certification of TSN networks for software-defined vehicles.",
+    tagline: "Engineering Trust for Software-Defined Vehicles",
     fundedBy: "Funded by",
     addressTitle: "Address",
     address: ["Inria Grenoble", "655 avenue de l'Europe", "38330 Montbonnot-Saint-Martin", "France"],
@@ -290,7 +288,7 @@ const en = {
       rows: ["Radar → brake", "Camera → computer", "Lidar → computer", "Computer → rear brake"],
     },
     monitor: {
-      title: "Parameters to be monitored",
+      title: "Runtime monitoring",
       text: "In service, CertiSen watches the parameters the proof relies on.",
       switching: "switching delay",
       sync: "sync precision",
@@ -329,9 +327,9 @@ const en = {
       mean: "Mean",
     },
     finale: {
-      title1: "Every millisecond,",
-      title2: "proven.",
-      text: "From the assembly line to every road: certified again after every OTA update.",
+      title1: "Every Millisecond.",
+      title2: "Mathematically Proven.",
+      text: "From the Factory Floor to Every Road. Verified After Every OTA Update.",
       cta: "Request a demo",
     },
   },

@@ -25,6 +25,8 @@ import { sectionIndex } from "@/lib/sections";
  * Pour les réactiver, reprendre aussi la disposition du bento à 6 cartes (commit 922ee27).
  */
 const SHOW_AI_DESIGN = false;
+/** Carte « Cybersécurité » : désactivée le 12/11/2026 (Lucas), code conservé. */
+const SHOW_CYBER = false;
 
 /* ---------------- Preuve Rocq qui s'écrit ---------------- */
 const PROOF: { k: string; r: string; dim?: boolean }[] = [
@@ -384,23 +386,25 @@ export function Features() {
         onPointerDown={c.onPointerDown}
         onClickCapture={c.onClickCapture}
         onKeyDown={c.onKeyDown}
-        className={`relative mt-10 flex gap-3 overflow-x-auto pb-2 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${TRACK} md:mx-auto md:mt-10 md:grid md:max-w-[1200px] md:grid-flow-dense md:grid-cols-2 md:grid-rows-[repeat(3,14rem)] md:gap-3 lg:mt-16 lg:gap-4 md:overflow-visible md:px-6 md:pb-0 lg:grid-cols-3 lg:grid-rows-none lg:auto-rows-[28.5rem] ${
+        className={`relative mt-10 flex gap-3 overflow-x-auto pb-2 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${TRACK} md:mx-auto md:mt-10 md:grid md:max-w-[1200px] md:grid-flow-dense md:grid-cols-2 md:grid-rows-[repeat(3,14rem)] md:gap-3 lg:mt-16 lg:grid-rows-[15.5rem_15.5rem_19rem] lg:gap-4 md:overflow-visible md:px-6 md:pb-0 ${
           c.dragging ? "snap-none select-none" : "snap-x snap-mandatory"
         }`}
       >
-        {/* Bento à 4 cartes, rangées de hauteur fixe (IA et Conception visuelle désactivées) —
-            tablette (2 colonnes × 3 rangées, tout tient dans un écran) : [preuve | OTA] sur deux rangées,
-            puis [cyber | écosystème] ; PC (3 colonnes, zigzag) : [preuve ×2 | cyber] [écosystème | OTA ×2]. */}
-        <Feature show={show} className="md:row-span-2 lg:col-span-2 lg:row-span-1" icon={ShieldCheck} title={it.proof.title} text={it.proof.text}>
+        {/* Bento à 3 cartes, rangées de hauteur fixe (IA, Conception visuelle et Cybersécurité désactivées,
+            cette dernière le 12/11/2026) — tablette et PC (2 colonnes × 3 rangées) : [preuve | OTA] sur deux
+            rangées, puis l'écosystème sur toute la largeur (rangée plus haute sur PC : son anneau passe sous le texte). Téléphone : carrousel. */}
+        <Feature show={show} className="md:row-span-2" icon={ShieldCheck} title={it.proof.title} text={it.proof.text}>
           <ProofVisual />
         </Feature>
-        <Feature show={show} delay={0.06} className="md:row-span-2 lg:col-span-2 lg:col-start-2 lg:row-span-1" icon={CloudDownload} title={it.ota.title} text={it.ota.text}>
+        <Feature show={show} delay={0.06} className="md:row-span-2" icon={CloudDownload} title={it.ota.title} text={it.ota.text}>
           <OtaVisual />
         </Feature>
-        <Feature show={show} delay={0.12} icon={Fingerprint} title={it.cyber.title} text={it.cyber.text}>
-          <CyberVisual />
-        </Feature>
-        <Feature show={show} delay={0.18} icon={Puzzle} title={it.eco.title} text={it.eco.text}>
+        {SHOW_CYBER ? (
+          <Feature show={show} delay={0.12} icon={Fingerprint} title={it.cyber.title} text={it.cyber.text}>
+            <CyberVisual />
+          </Feature>
+        ) : null}
+        <Feature show={show} delay={0.12} className="md:col-span-2" icon={Puzzle} title={it.eco.title} text={it.eco.text}>
           <EcosystemVisual />
         </Feature>
         {SHOW_AI_DESIGN ? (

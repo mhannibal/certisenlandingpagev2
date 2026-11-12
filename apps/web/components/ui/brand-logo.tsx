@@ -66,10 +66,10 @@ export function BrandLogo({
 
 /** Logos utilisés sur le site (fichiers officiels dans public/logos). */
 export const LOGOS = {
-  inria: { src: "/logos/inria.png", width: 309, height: 135, crop: [13, 13, 296, 96] },
-  iss: { src: "/logos/inria-startup-studio.png", width: 799, height: 232 },
+  inria: { src: "/logos/inria.webp", width: 309, height: 135, crop: [13, 13, 296, 96] },
+  iss: { src: "/logos/inria-startup-studio.webp", width: 799, height: 232 },
   rocq: { src: "/logos/rocq.svg", width: 815.52, height: 148.52 },
-  inet: { src: "/logos/inet.png", width: 256, height: 256 },
+  inet: { src: "/logos/inet.webp", width: 256, height: 256 },
   /** Logo officiel tiré de bpifrance.fr (thème du site, logo-bpi-dark.svg). */
   bpifrance: { src: "/logos/bpifrance.svg", width: 77.352, height: 22.2 },
   /** Version fond sombre dérivée du logo officiel : texte blanc, point jaune d'origine. */

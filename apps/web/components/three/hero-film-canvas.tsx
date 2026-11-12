@@ -1,10 +1,11 @@
 "use client";
 
-import { Environment, Lightformer } from "@react-three/drei";
+import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Bloom, EffectComposer, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { useInView, useTransform, type MotionValue } from "motion/react";
-import { createContext, useContext, useLayoutEffect, useMemo, useRef, type RefObject } from "react";
+import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { DPR_FLOOR, renderQuality } from "@/lib/render-quality";
 import * as THREE from "three";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { LOGO_PATHS } from "@/components/logo";
@@ -2820,11 +2821,15 @@ export default function HeroFilmCanvas({
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: "200px" });
   const ink = useMemo(themeInk, []);
+  // Qualité selon l'appareil ; résolution abaissée si la fluidité chute.
+  const quality = useMemo(renderQuality, []);
+  const [dpr, setDpr] = useState<[number, number]>(quality.dpr);
+  const lower = useCallback(() => setDpr([DPR_FLOOR, DPR_FLOOR]), []);
   return (
     <div ref={ref} className={className}>
       <Canvas
         frameloop={inView ? "always" : "never"}
-        dpr={[1, 1.75]}
+        dpr={dpr}
         camera={{ position: SHOTS[0]!.pos, fov: FOV, near: 0.1, far: 220 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
@@ -2845,7 +2850,8 @@ export default function HeroFilmCanvas({
         <CameraRig progress={progress} />
         <NodeProjector progress={progress} markers={markers} />
         </IntroCtx.Provider>
-        <EffectComposer multisampling={4}>
+        <PerformanceMonitor onDecline={lower} onFallback={lower} flipflops={3} />
+        <EffectComposer multisampling={quality.msaa}>
           <Bloom mipmapBlur intensity={0.55} luminanceThreshold={0.95} luminanceSmoothing={0.2} />
           <ToneMapping mode={8} />
           <Vignette eskil={false} offset={0.2} darkness={0.6} />

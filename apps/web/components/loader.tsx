@@ -14,29 +14,28 @@ import {
 } from "react";
 import { LOGO_PATHS } from "@/components/logo";
 import { useDict } from "@/lib/i18n/provider";
+import { hasWebGL } from "@/components/three/webgl-guard";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-const CURTAIN = [0.76, 0, 0.24, 1] as const;
-const SESSION_KEY = "certisen-loaded";
 
 /**
  * Étapes réelles du chargement, dans l'ordre affiché, avec leur poids dans la barre.
- * Les scènes 3D signalent elles-mêmes leur fin via useLoaderSignal().
+ * La scène du héros signale elle-même sa fin via useLoaderSignal().
  */
 const TASKS = [
   { id: "page", weight: 1 },
   { id: "fonts", weight: 1 },
   { id: "heroModule", weight: 2 },
-  { id: "carModule", weight: 2 },
-  { id: "heroScene", weight: 2 },
-  { id: "carScene", weight: 3 },
+  { id: "heroScene", weight: 3 },
 ] as const;
 export type LoaderTask = (typeof TASKS)[number]["id"];
 const TOTAL = TASKS.reduce((s, t) => s + t.weight, 0);
-/** Au-delà, on ouvre le site quoi qu'il arrive (ex. WebGL indisponible). */
+/** En dessous de ce délai, aucun indicateur : la scène arrive simplement en fondu. */
+const GRACE_MS = 900;
+/** Au-delà, on ouvre le site quoi qu'il arrive (ex. WebGL indisponible ou très lent). */
 const SAFETY_MS = 15000;
 
-/** Vrai quand l'écran de chargement commence à s'effacer : les entrées de page peuvent démarrer. */
+/** Vrai quand la scène 3D du héros est prête (ou abandonnée) : fondu de la scène, lecture automatique. */
 const ReadyContext = createContext(false);
 export const useReady = () => useContext(ReadyContext);
 
@@ -47,143 +46,63 @@ export function useLoaderSignal(id: LoaderTask) {
   return useCallback(() => mark(id), [mark, id]);
 }
 
-function LoaderScreen({ progress, step }: { progress: number; step: string }) {
+/**
+ * Indicateur discret, en bas au centre, pour les appareils lents uniquement : le texte du site
+ * reste lisible au-dessus. Logo qui se dessine en boucle, étape en cours et barre fine.
+ * Les lecteurs d'écran n'entendent que l'étape (pas chaque pourcentage).
+ */
+function LoadingBadge({ progress, step, label }: { progress: number; step: string; label: string }) {
   return (
     <motion.div
-      key="loader"
-      role="status"
-      aria-live="polite"
-      aria-label={`CertiSen ${progress}%`}
-      initial={{ y: 0 }}
-      exit={{ y: "-100%", transition: { duration: 1.1, ease: CURTAIN } }}
-      className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-ink"
+      key="loading-badge"
+      initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: 8, filter: "blur(4px)", transition: { duration: 0.35 } }}
+      transition={{ duration: 0.5, ease: EASE }}
+      className="pointer-events-none fixed inset-x-0 bottom-8 z-[60] mx-auto flex w-fit items-center gap-3 rounded-full border border-line-2 bg-card/85 py-2 pl-2.5 pr-4 shadow-[0_12px_40px_-12px_rgb(0_0_0/0.8)] backdrop-blur-xl"
     >
-      <motion.div
-        exit={{
-          opacity: 0,
-          y: -24,
-          transition: { duration: 0.45, ease: "easeIn" },
-        }}
-        className="flex flex-col items-center"
-      >
-        {/* Logo : contour du bouclier qui se dessine, remplissage, puis coche */}
-        <svg
-          width="72"
-          height="72"
-          viewBox="0 0 32 32"
-          fill="none"
-          aria-hidden
-          className="text-fg"
-        >
-          <motion.path
-            d={LOGO_PATHS.crown}
-            fill="currentColor"
-            initial={{ opacity: 0, y: -3 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.3, duration: 0.5, ease: EASE }}
-          />
-          <motion.path
-            d={LOGO_PATHS.pusher}
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ delay: 1.45, duration: 0.4 }}
-          />
-          <motion.path
-            d={LOGO_PATHS.shield}
-            stroke="currentColor"
-            strokeWidth="0.9"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0, fill: "rgba(250,250,250,0)" }}
-            animate={{ pathLength: 1, fill: "rgba(250,250,250,1)" }}
-            transition={{
-              pathLength: {
-                delay: 0.15,
-                duration: 1.4,
-                ease: [0.65, 0, 0.35, 1],
-              },
-              fill: { delay: 1.45, duration: 0.6 },
-            }}
-          />
-          <motion.path
-            d={LOGO_PATHS.check}
-            stroke="var(--color-ink)"
-            strokeWidth="2.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{
-              delay: 1.95,
-              duration: 0.6,
-              ease: [0.65, 0, 0.35, 1],
-            }}
-          />
-        </svg>
-
-        {/* Nom : lettres révélées depuis un masque */}
-        <p className="mt-5 flex overflow-hidden text-2xl font-medium tracking-[-0.03em] text-fg">
-          {Array.from("CertiSen").map((ch, i) => (
-            <motion.span
-              key={i}
-              className="inline-block"
-              initial={{ y: "110%" }}
-              animate={{ y: 0 }}
-              transition={{ delay: 0.9 + i * 0.07, duration: 0.8, ease: EASE }}
-            >
-              {ch}
-            </motion.span>
-          ))}
-        </p>
-      </motion.div>
-
-      {/* Progression */}
-      <motion.div
-        exit={{ opacity: 0, transition: { duration: 0.25 } }}
-        className="absolute inset-x-0 bottom-12 mx-auto flex w-[min(320px,80vw)] flex-col gap-3"
-      >
-        <div className="flex justify-between font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              key={step}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
-            >
-              {step}
-            </motion.span>
-          </AnimatePresence>
-          <span className="tabular-nums text-fg">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden className="shrink-0 text-fg">
+        <path d={LOGO_PATHS.crown} fill="currentColor" />
+        <motion.path
+          d={LOGO_PATHS.shield}
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0.05 }}
+          animate={{ pathLength: [0.05, 1, 1, 0.05] }}
+          transition={{ duration: 2.4, times: [0, 0.45, 0.7, 1], repeat: Infinity, ease: [0.65, 0, 0.35, 1] }}
+        />
+      </svg>
+      <div className="flex w-36 flex-col gap-1.5 sm:w-44">
+        <div className="flex items-baseline justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-subtle">
+          <span role="status" aria-live="polite" className="truncate">
+            <span className="sr-only">{label} : </span>
+            {step}
+          </span>
+          <span aria-hidden className="tabular-nums text-fg">
             {String(progress).padStart(3, "0")}
           </span>
         </div>
-        <div className="h-px w-full bg-line-2">
-          <div
-            className="h-px origin-left bg-fg"
-            style={{ transform: `scaleX(${progress / 100})` }}
-          />
+        <div aria-hidden className="h-px w-full bg-line-2">
+          <div className="h-px origin-left bg-fg transition-transform duration-200" style={{ transform: `scaleX(${progress / 100})` }} />
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
 
 /**
- * Écran de chargement à l'arrivée, piloté par des étapes RÉELLES : page, polices,
- * modules 3D, premier rendu des deux scènes (shaders compilés). La barre suit leur
- * avancement pondéré (lissée, sans jamais dépasser le réel). Le rideau se lève quand
- * tout est prêt ET que l'animation du logo a eu le temps de se jouer.
+ * Chargement à l'arrivée, piloté par des étapes RÉELLES : page, polices, module 3D et premier
+ * rendu de la scène du héros (shaders compilés). Le texte du site est visible tout de suite ;
+ * la scène 3D apparaît en fondu quand elle est prête. Si cela prend plus de GRACE_MS (appareil
+ * lent), un petit indicateur s'affiche en bas. La scène de la voiture se prépare à part, plus tard.
  */
 export function LoaderProvider({ children }: { children: ReactNode }) {
   const labels = useDict().loader;
-  const [finished, setFinished] = useState<ReadonlySet<LoaderTask>>(
-    () => new Set(),
-  );
+  const [finished, setFinished] = useState<ReadonlySet<LoaderTask>>(() => new Set());
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
+  const [slow, setSlow] = useState(false);
   const lenis = useLenis();
   const lenisRef = useRef(lenis);
   lenisRef.current = lenis;
@@ -199,67 +118,44 @@ export function LoaderProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Étapes suivies directement ici : page, polices, téléchargement des modules 3D.
+  // Étapes suivies directement ici : page, polices, téléchargement du module 3D du héros.
   useEffect(() => {
     if (document.readyState === "complete") mark("page");
     else window.addEventListener("load", () => mark("page"), { once: true });
     document.fonts.ready.then(() => mark("fonts")).catch(() => mark("fonts"));
-    import("@/components/three/hero-film-canvas")
-      .then(() => mark("heroModule"))
-      .catch(() => mark("heroModule"));
-    import("@/components/three/car-canvas")
-      .then(() => mark("carModule"))
-      .catch(() => mark("carModule"));
+    // Sans WebGL utilisable, la scène ne sera pas montée : inutile de télécharger le moteur 3D.
+    if (!hasWebGL()) mark("heroModule");
+    else
+      import("@/components/three/hero-film-canvas")
+        .then(() => mark("heroModule"))
+        .catch(() => mark("heroModule"));
   }, [mark]);
 
-  // Barre lissée vers l'avancement réel + fin quand tout est prêt et la durée minimale écoulée.
+  // Fin dès que tout est réellement prêt ; indicateur seulement si cela tarde ; barre lissée.
   useEffect(() => {
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem(SESSION_KEY) === "1";
-    } catch {
-      /* stockage indisponible : durée normale */
-    }
-    const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    const minMs = reduced ? 300 : seen ? 1400 : 2600;
     const start = performance.now();
     let shown = 0;
     let raf = 0;
-    let closing = false;
-
     const tick = () => {
       const elapsed = performance.now() - start;
-      const done = finishedRef.current;
-      const real =
-        TASKS.reduce((s, t) => s + (done.has(t.id) ? t.weight : 0), 0) / TOTAL;
-      const timedOut = elapsed > SAFETY_MS;
-      const target = timedOut ? 1 : real;
-      // Lissage : on rattrape le réel en douceur, sans jamais le dépasser ni reculer.
-      shown = Math.min(
-        target,
-        shown + Math.max(0.004, (target - shown) * 0.12),
-      );
-      setProgress(Math.round(shown * 100));
-
-      if (!closing && shown >= 0.999 && elapsed >= minMs) {
-        closing = true;
-        try {
-          sessionStorage.setItem(SESSION_KEY, "1");
-        } catch {
-          /* ignoré */
-        }
-        window.setTimeout(() => setDone(true), 350);
+      const ok = finishedRef.current;
+      const real = TASKS.reduce((s, t) => s + (ok.has(t.id) ? t.weight : 0), 0) / TOTAL;
+      if (real >= 1 || elapsed > SAFETY_MS) {
+        setProgress(100);
+        setDone(true);
         return;
       }
+      if (elapsed > GRACE_MS) setSlow(true);
+      // Lissage : on rattrape le réel en douceur, sans jamais le dépasser ni reculer.
+      shown = Math.min(real, shown + Math.max(0.004, (real - shown) * 0.12));
+      setProgress(Math.round(shown * 100));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Défilement bloqué pendant le chargement.
+  // Défilement bloqué tant que la scène du héros n'est pas prête (le film n'aurait pas d'image).
   useEffect(() => {
     const html = document.documentElement;
     if (!done) {
@@ -281,7 +177,7 @@ export function LoaderProvider({ children }: { children: ReactNode }) {
       <ReadyContext.Provider value={done}>
         {children}
         <AnimatePresence>
-          {done ? null : <LoaderScreen progress={progress} step={step} />}
+          {slow && !done ? <LoadingBadge progress={progress} step={step} label={labels.label} /> : null}
         </AnimatePresence>
       </ReadyContext.Provider>
     </SignalContext.Provider>

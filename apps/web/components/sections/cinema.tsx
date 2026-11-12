@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { NODE_ICON } from "@/components/three/node-icons";
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -30,9 +31,9 @@ import { NODES, nodeById } from "@/lib/car-network";
 import { smoothstep } from "@/lib/network";
 import { SectionLabel } from "@/components/ui/primitives";
 import { useDict, useI18n } from "@/lib/i18n/provider";
-import { useLoaderSignal } from "@/components/loader";
+import { useReady } from "@/components/loader";
 import { TsnGraph } from "./tsn-graph";
-import { WebGLGuard } from "@/components/three/webgl-guard";
+import { WebGLGuard, hasWebGL } from "@/components/three/webgl-guard";
 import { sectionIndex } from "@/lib/sections";
 
 const CarCanvas = dynamic(() => import("@/components/three/car-canvas"), {
@@ -112,8 +113,8 @@ function ShotContent({ index }: { index: number }) {
       </div>
       <div className="px-4 py-3.5">
         <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={index} initial="hidden" animate="show" exit="exit">
-            <h3 className="overflow-hidden text-lg font-medium leading-snug tracking-tight text-fg">
+          <motion.div key={index} aria-hidden initial="hidden" animate="show" exit="exit">
+            <p className="overflow-hidden text-lg font-medium leading-snug tracking-tight text-fg">
               <motion.span
                 className="block"
                 variants={{
@@ -127,7 +128,7 @@ function ShotContent({ index }: { index: number }) {
               >
                 {shot.title}
               </motion.span>
-            </h3>
+            </p>
             <motion.p
               className="mt-1 text-[13px] leading-relaxed text-muted"
               variants={{
@@ -465,8 +466,24 @@ function NodeMorph({
 
 export function Cinema() {
   const c = useDict().cinema;
-  const onSceneReady = useLoaderSignal("carScene");
   const ref = useRef<HTMLElement>(null);
+  // Scène de la voiture : son code est téléchargé au calme une fois le héros prêt, et la scène
+  // n'est montée (shaders compilés) qu'à l'approche de la section, environ deux écrans avant.
+  // Elle apparaît ensuite en fondu dès sa première image complète.
+  const heroReady = useReady();
+  const near = useInView(ref, { margin: "200% 0px 200% 0px", once: true });
+  const [carReady, setCarReady] = useState(false);
+  const onSceneReady = useCallback(() => setCarReady(true), []);
+  useEffect(() => {
+    if (!heroReady || !hasWebGL()) return;
+    const load = () => void import("@/components/three/car-canvas").catch(() => {});
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(load, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = window.setTimeout(load, 1500);
+    return () => window.clearTimeout(t);
+  }, [heroReady]);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end end"],
@@ -552,23 +569,27 @@ export function Cinema() {
           style={{ opacity: sceneOpacity }}
           className={`absolute inset-0 ${graphOn ? "pointer-events-none" : ""}`}
         >
-          <WebGLGuard
-            onFallback={onSceneReady}
-            fallback={<CarFallback className="absolute inset-0 z-0 pt-24" />}
-          >
-            <CarCanvas
-              onReady={onSceneReady}
-              progress={progress}
-              stage={stage}
-              selected={selected}
-              onSelect={(id) => {
-                setHasClicked(true);
-                setSelected((cur) => (cur === id ? null : id));
-              }}
-              className="absolute inset-0 isolate z-0"
-              markersHidden={morphing}
-            />
-          </WebGLGuard>
+          <div className={`absolute inset-0 ${carReady ? "animate-scene-in motion-reduce:animate-none" : "opacity-0"}`}>
+            {near ? (
+              <WebGLGuard
+                onFallback={onSceneReady}
+                fallback={<CarFallback className="absolute inset-0 z-0 pt-24" />}
+              >
+                <CarCanvas
+                  onReady={onSceneReady}
+                  progress={progress}
+                  stage={stage}
+                  selected={selected}
+                  onSelect={(id) => {
+                    setHasClicked(true);
+                    setSelected((cur) => (cur === id ? null : id));
+                  }}
+                  className="absolute inset-0 isolate z-0"
+                  markersHidden={morphing}
+                />
+              </WebGLGuard>
+            ) : null}
+          </div>
         </motion.div>
 
         <NodeMorph progress={progress} container={stickyRef} />
@@ -598,6 +619,18 @@ export function Cinema() {
         {/* en-tête */}
         <div className="pointer-events-none absolute inset-x-0 top-28 mx-auto flex max-w-[1200px] items-start justify-between gap-4 px-6">
           <SectionLabel index={sectionIndex("cinema")}>{c.eyebrow}</SectionLabel>
+          {/* Version texte des plans, pour les lecteurs d'écran (la carte animée leur est masquée). */}
+          <div className="sr-only">
+            <h2>{c.eyebrow}</h2>
+            <ol>
+              {c.shots.map((sh) => (
+                <li key={sh.title}>
+                  <h3>{sh.title}</h3>
+                  <p>{sh.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
           <AnimatePresence>
             {showHint ? (
               <motion.span

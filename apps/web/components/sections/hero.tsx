@@ -95,11 +95,10 @@ export function Hero() {
         >
           {t.facts.map((f, i) => (
             <div
-              key={f.k}
+              key={f}
               className={`py-5 sm:pr-6 ${i > 0 ? "border-t border-line sm:border-l sm:border-t-0 sm:pl-6" : ""}`}
             >
-              <dt className="font-mono text-[11px] uppercase tracking-[0.14em] text-subtle">{f.k}</dt>
-              <dd className="mt-1.5 text-[15px] text-fg">{f.v}</dd>
+              <dd className="text-[15px] text-fg">{f}</dd>
             </div>
           ))}
         </motion.dl>

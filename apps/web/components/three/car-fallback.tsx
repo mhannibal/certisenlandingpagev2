@@ -41,6 +41,7 @@ export default function CarFallback({ className }: { className?: string }) {
   return (
     <div className={`grid place-items-center ${className ?? ""}`}>
       <svg
+        aria-hidden
         viewBox="-2.6 -2.0 5.2 2.25"
         className="w-[min(90%,1100px)] text-fg"
         fill="none"

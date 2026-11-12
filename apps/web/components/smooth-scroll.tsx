@@ -61,6 +61,11 @@ function AnchorNav() {
       if (id && !el) return;
       e.preventDefault();
       go(el ? Math.max(0, el.getBoundingClientRect().top + window.scrollY + OFFSET) : 0);
+      // Le focus suit la cible : au clavier ou au lecteur d'écran, la lecture reprend là où l'on arrive.
+      if (el) {
+        if (!el.hasAttribute("tabindex") && !el.matches("a[href], button, input, select, textarea")) el.setAttribute("tabindex", "-1");
+        el.focus({ preventScroll: true });
+      }
     };
     document.addEventListener("click", onClick);
     return () => {

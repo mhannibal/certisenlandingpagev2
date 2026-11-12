@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
-/* Écran assez grand pour le pied de page « rideau » : fixé sous la page, il se découvre au défilement. */
+/* Écran assez grand pour le pied de page « rideau » : fixé sous la page, il se dévoile au défilement. */
+/* Cibles de saut (sections, contenu) : le focus y est placé par le script, sans cadre visible. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
 @custom-variant tall (@media (min-width: 1024px) and (min-height: 760px));
 
 /*
@@ -41,6 +46,30 @@
   /* Pied de page : aurore qui respire, logo qui bat. */
   --animate-footer-breathe: footer-breathe 8s ease-in-out infinite alternate;
   --animate-footer-heartbeat: footer-heartbeat 2.2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  /* Entrées en CSS pur : l'intro et la barre s'animent dès la première image, sans attendre le
+     JavaScript ni la 3D (affichage rapide, référencement, lecteurs d'écran). */
+  --animate-intro-in: intro-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-nav-in: nav-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+  --animate-scene-in: scene-in 0.9s ease-out both;
+
+  @keyframes intro-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+      filter: blur(8px);
+    }
+  }
+  @keyframes nav-in {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+  }
+  @keyframes scene-in {
+    from {
+      opacity: 0;
+    }
+  }
 
   @keyframes footer-breathe {
     0% {

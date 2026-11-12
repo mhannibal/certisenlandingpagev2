@@ -9,6 +9,7 @@ const zh: Dictionary = {
     keywords: ["CertiSen", "形式化验证", "TSN", "时间敏感网络", "IEEE 802.1Qbv", "IEEE 802.1AS", "软件定义汽车", "SDV", "OTA 升级", "时间安全", "汽车网络安全", "Rocq", "形式化证明", "ASIL-D", "Inria"],
   },
   loader: {
+    label: "正在加载 3D 场景",
     steps: {
       page: "页面",
       fonts: "字体",
@@ -20,6 +21,7 @@ const zh: Dictionary = {
     ready: "就绪",
   },
   nav: {
+    skip: "跳到主要内容",
     links: { problem: "问题", solution: "方案", platform: "平台", action: "实际演示", journey: "发展历程" },
     contact: "联系我们",
     home: "CertiSen 首页",
@@ -29,16 +31,12 @@ const zh: Dictionary = {
   },
   hero: {
     badge: "入选 Pionniers de l'IA（人工智能先锋）计划",
-    title1: "每一毫秒，",
-    title2: "皆有证明。",
+    title1: "未来汽车背后的",
+    title2: "智能。",
     lead: "CertiSen 是面向软件定义汽车的持续形式化验证层。我们以数学证明保障每次 OTA 升级后的时间安全与网络安全。",
     cta: "预约演示",
     secondary: "了解原理",
-    facts: [
-      { k: "安全等级", v: "ASIL-D" },
-      { k: "首个范围", v: "IEEE 802.1Qbv" },
-      { k: "证明", v: "Rocq，机器检验" },
-    ],
+    facts: ["AI 原生工程", "形式化验证", "持续安全保障"],
   },
   trust: {
     label: ["诞生于法国 Inria 格勒诺布尔", "基于实时通信标准"],
@@ -95,9 +93,9 @@ const zh: Dictionary = {
   },
   solution: {
     eyebrow: "解决方案",
-    title: "持续运行的",
-    accent: "形式化验证层。",
-    description: "CertiSen 位于现有工具与车辆之间：每一个 TSN 配置都由机器检验的证明完成认证，部署前如此，每次升级后亦然。",
+    title: "软件定义汽车的",
+    accent: "持续保障层。",
+    description: "CertiSen 将关键的时序与网络安全需求转化为经数学证明、由机器验证的保障，覆盖从最初设计到部署的全过程，并在每次 OTA 升级后再次验证。",
     inputs: "输入",
     outputs: "输出",
     nodes: {
@@ -116,9 +114,9 @@ const zh: Dictionary = {
   features: {
     eyebrow: "平台",
     goTo: "跳转到第",
-    title: "从设计到部署，",
-    accent: "全生命周期认证。",
-    description: "确定性性能与内置网络安全相结合，让 TSN 网络达到 ASIL-D 安全等级。",
+    title: "从最初设计到每一次更新，",
+    accent: "持续验证。",
+    description: "以形式化验证为后盾的时间安全与网络安全。",
     items: {
       proof: { title: "形式化认证", text: "对 TSN 协议进行形式化规约，并以机器检验的证明确保每个配置的正确性。" },
       ai: { title: "AI 优化", text: "由 AI 驱动生成 TSN 配置（优先级、路径、门控列表），并由轻量级认证器提供保障。" },
@@ -223,7 +221,7 @@ const zh: Dictionary = {
     },
   },
   footer: {
-    tagline: "面向软件定义汽车的 TSN 网络形式化认证。",
+    tagline: "为软件定义汽车构建信任",
     fundedBy: "资助方",
     addressTitle: "地址",
     address: ["Inria 格勒诺布尔中心", "655 avenue de l'Europe", "38330 Montbonnot-Saint-Martin", "法国"],
@@ -288,7 +286,7 @@ const zh: Dictionary = {
       rows: ["雷达 → 制动", "摄像头 → 计算单元", "激光雷达 → 计算单元", "计算单元 → 后制动"],
     },
     monitor: {
-      title: "需监控的参数",
+      title: "运行时监控",
       text: "投入使用后，CertiSen 持续监控证明所依赖的参数。",
       switching: "交换时延",
       sync: "同步精度",
@@ -328,8 +326,8 @@ const zh: Dictionary = {
     },
     finale: {
       title1: "每一毫秒，",
-      title2: "皆有证明。",
-      text: "从装配线到每一条道路：每次 OTA 升级后重新认证。",
+      title2: "皆经数学证明。",
+      text: "从工厂车间到每一条道路。每次 OTA 升级后均经验证。",
       cta: "预约演示",
     },
   },
