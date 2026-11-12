@@ -497,9 +497,14 @@ export function decalOutlines(): THREE.Vector3[][] {
 
 export type MaterialKey = "paint" | "cladding" | "gloss" | "glass" | "chrome" | "lamp" | "tailLamp" | "liner";
 
+/** Marquage posé sur une pièce : emblème CertiSen (capot) ou plaque « CertiSen ». */
+export type BodyDecal = { kind: "badge" | "plate"; geometry: THREE.BufferGeometry };
+
 export type BodyPiece = {
   id: "roof" | "hood" | "left" | "right" | "nose" | "tail";
   meshes: Partial<Record<MaterialKey, THREE.BufferGeometry>>;
+  /** Marquages texturés (coordonnées UV), dans le même repère que la pièce. */
+  decals: BodyDecal[];
   /** Lignes d'ouvrants (portes, capot), dans le même repère. */
   seams?: THREE.BufferGeometry;
   center: THREE.Vector3;
@@ -516,6 +521,7 @@ function piece(
   start: number,
   move: [number, number, number],
   rot: [number, number, number],
+  decals: BodyDecal[] = [],
 ): BodyPiece {
   const clean = Object.fromEntries(Object.entries(meshes).filter(([, g]) => !!g)) as Partial<
     Record<MaterialKey, THREE.BufferGeometry>
@@ -527,10 +533,11 @@ function piece(
   }
   const center = box.getCenter(new THREE.Vector3());
   const seamGeo = seams ? linesGeometry(seams) : undefined;
-  for (const g of [...Object.values(clean), seamGeo]) g?.translate(-center.x, -center.y, -center.z);
+  for (const g of [...Object.values(clean), seamGeo, ...decals.map((d) => d.geometry)]) g?.translate(-center.x, -center.y, -center.z);
   return {
     id,
     meshes: clean,
+    decals,
     seams: seamGeo,
     center,
     start,
@@ -654,7 +661,87 @@ function hoodPiece(): BodyPiece {
     0.05,
     [0.8, 1.2, 0],
     [0, 0, -0.55],
+    [{ kind: "badge", geometry: hoodBadge() }],
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Marquages : emblème du capot et plaques (textures dans car-body.tsx) */
+/* ------------------------------------------------------------------ */
+
+/** Hauteur du dessus de la carrosserie en (x, z) : u cherché entre l'épaule (4) et l'axe (8). */
+function topAt(x: number, z: number) {
+  const pts = S.pointsAt(x);
+  const az = Math.abs(z);
+  let lo = 4;
+  let hi = 8;
+  for (let i = 0; i < 32; i++) {
+    const m = (lo + hi) / 2;
+    if (S.section(x, m, pts)[0] > az) lo = m;
+    else hi = m;
+  }
+  return S.section(x, (lo + hi) / 2, pts)[1];
+}
+
+/** Grille (i, j) ∈ [0, n] × [0, m] → sommet et UV ; triangles orientés selon `outward`. */
+function decalGrid(n: number, m: number, at: (u: number, v: number) => THREE.Vector3) {
+  const pos: number[] = [];
+  const uv: number[] = [];
+  const idx: number[] = [];
+  for (let j = 0; j <= m; j++)
+    for (let i = 0; i <= n; i++) {
+      const p = at(i / n, j / m);
+      pos.push(p.x, p.y, p.z);
+      uv.push(i / n, j / m);
+    }
+  for (let j = 0; j < m; j++)
+    for (let i = 0; i < n; i++) {
+      const a = j * (n + 1) + i;
+      const b = a + 1;
+      const c = a + n + 1;
+      const d = c + 1;
+      idx.push(a, b, c, b, d, c);
+    }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+/**
+ * Emblème CertiSen sur le capot, épousant sa courbure : vu de face, le haut du logo
+ * est tourné vers le pare-brise (texture : u de gauche à droite = de +z à −z).
+ */
+export function hoodBadge() {
+  // 0,64 m (agrandi deux fois le 12/11 à la demande de Lucas) : centré sur le capot
+  // (1,10 m de long, environ 1,5 m de large) pour rester sur sa partie plate.
+  const size = 0.64;
+  const xc = lerp(split.cowl, split.nose, 0.5);
+  return decalGrid(24, 24, (u, v) => {
+    const z = size / 2 - u * size;
+    const x = xc + size / 2 - v * size;
+    return new THREE.Vector3(x, topAt(x, z) + 0.006, z);
+  });
+}
+
+/**
+ * Plaque « CertiSen » (format européen 520 × 110 mm) sur la face avant (sur la prise
+ * d'air basse) ou arrière (à la place de la plaque existante), lisible de face.
+ */
+export function plateDecal(front: boolean) {
+  const p = front ? { y: 0.52, h: 0.055, w: 0.26 } : { y: 0.7, h: 0.055, w: 0.26 };
+  const bulge = front ? DESIGN.bulge.front : DESIGN.bulge.rear;
+  const xLimit = front ? split.nose : split.tail;
+  const out = front ? 0.009 : -0.009;
+  return decalGrid(16, 2, (u, v) => {
+    // Vue de face : la droite de l'observateur est −z à l'avant, +z à l'arrière.
+    const z = front ? p.w - u * 2 * p.w : -p.w + u * 2 * p.w;
+    const y = p.y - p.h + v * 2 * p.h;
+    const q = endPoint(S, front, bulge, y, z, xLimit);
+    return q.setX(q.x + out);
+  });
 }
 
 /** Pièce d'extrémité : flancs de l'arrondi + face bombée, bas en habillage noir. */
@@ -711,6 +798,7 @@ function endPiece(front: boolean): BodyPiece {
     0.09,
     [front ? 1.5 : -1.5, 0, 0],
     [0, 0, 0],
+    [{ kind: "plate", geometry: plateDecal(front) }],
   );
 }
 

@@ -7,7 +7,7 @@
  * Monochrome : la chaîne de freinage (critique) en blanc, le reste en gris.
  */
 
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { Check } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CRITICAL_PATH, NODES, type CarNode } from "@/lib/car-network";
@@ -41,6 +41,84 @@ const PLACE: Record<Id, { col: ColKey; y: number }> = {
 const colX = (c: ColKey) => COLS.find((k) => k.key === c)!.x;
 const box = (id: Id) => ({ x: colX(PLACE[id].col), y: PLACE[id].y });
 
+/**
+ * Téléphone : les domaines deviennent des rangées (capteurs en haut, actionneurs en bas) et
+ * le graphe se lit de haut en bas ; cartes plus grandes, nom sur deux lignes, sans le rôle.
+ */
+const MW = 104;
+const MH = 50;
+/** Carte du graphe sur téléphone (unités du dessin), reprise par la bascule boutons → cartes. */
+export const NARROW_CARD = { w: MW, h: MH } as const;
+const ROW_Y: Record<ColKey, number> = { sensors: 6, network: 100, compute: 194, actuators: 288 };
+const MPLACE: Record<Id, { row: ColKey; x: number }> = {
+  radar: { row: "sensors", x: 8 },
+  camera: { row: "sensors", x: 128 },
+  lidar: { row: "sensors", x: 248 },
+  "sw-front": { row: "network", x: 8 },
+  "sw-central": { row: "network", x: 128 },
+  "sw-rear": { row: "network", x: 248 },
+  ecu: { row: "compute", x: 128 },
+  "brake-fl": { row: "actuators", x: 8 },
+  "brake-rl": { row: "actuators", x: 248 },
+};
+
+type Layout = {
+  narrow: boolean;
+  vb: { w: number; h: number };
+  w: number;
+  h: number;
+  box: (id: Id) => { x: number; y: number };
+  /** En-têtes de domaine : trait et libellé. */
+  heads: { key: ColKey; x: number; y: number; w: number }[];
+};
+
+const WIDE: Layout = {
+  narrow: false,
+  vb: VB,
+  w: W,
+  h: H,
+  box,
+  heads: COLS.map((c) => ({ key: c.key, x: c.x, y: 34, w: W })),
+};
+
+const NARROW: Layout = {
+  narrow: true,
+  vb: { w: 360, h: 362 },
+  w: MW,
+  h: MH,
+  box: (id) => ({ x: MPLACE[id].x, y: ROW_Y[MPLACE[id].row] + 22 }),
+  heads: COLS.map((c) => ({ key: c.key, x: 8, y: ROW_Y[c.key], w: 344 })),
+};
+
+/** Nom coupé en deux lignes au plus, à l'espace le plus proche du milieu (cartes étroites du téléphone). */
+export function twoLines(name: string) {
+  if (name.length <= 13 || !name.includes(" ")) return [name];
+  const words = name.split(" ");
+  let best = 1;
+  let gap = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const g = Math.abs(words.slice(0, i).join(" ").length - words.slice(i).join(" ").length);
+    if (g < gap) {
+      gap = g;
+      best = i;
+    }
+  }
+  return [words.slice(0, best).join(" "), words.slice(best).join(" ")];
+}
+
+/** Vrai sous 640 px de large (lu après le montage : le rendu serveur reste en colonnes). */
+export function useNarrowGraph() {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const m = window.matchMedia("(max-width: 639px)");
+    const f = () => setNarrow(m.matches);
+    f();
+    m.addEventListener("change", f);
+    return () => m.removeEventListener("change", f);
+  }, []);
+  return narrow;
+}
+
 /** Liens orientés dans le sens principal des messages ; `both` = échange dans les deux sens. */
 const EDGES: { from: Id; to: Id; both?: boolean }[] = [
   { from: "radar", to: "sw-front" },
@@ -60,7 +138,23 @@ const onCritical = (a: Id, b: Id) =>
   });
 
 /** Tracé d'un lien : courbe entre colonnes, ou arc sur le côté droit dans une même colonne. */
-function edgePath(from: Id, to: Id) {
+function edgePath(from: Id, to: Id, L: Layout) {
+  if (L.narrow) {
+    const a = L.box(from);
+    const b = L.box(to);
+    // Même rangée : trait horizontal entre cartes voisines ; sinon courbe du bas de l'une au haut de l'autre.
+    if (MPLACE[from].row === MPLACE[to].row) {
+      const ltr = a.x < b.x;
+      const y = a.y + MH / 2;
+      return `M ${ltr ? a.x + MW : a.x} ${y} L ${ltr ? b.x : b.x + MW} ${y}`;
+    }
+    const x1 = a.x + MW / 2;
+    const y1 = a.y + MH;
+    const x2 = b.x + MW / 2;
+    const y2 = b.y;
+    const my = (y1 + y2) / 2;
+    return `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`;
+  }
   const a = box(from);
   const b = box(to);
   if (PLACE[from].col === PLACE[to].col) {
@@ -95,6 +189,7 @@ export function TsnGraph({
   onSelect: (id: string) => void;
 }) {
   const d = useDict();
+  const L = useNarrowGraph() ? NARROW : WIDE;
   const [hover, setHover] = useState<Id | null>(null);
   const focus = (selected as Id | null) ?? hover;
   const paths = useRef(new Map<string, SVGPathElement>());
@@ -104,10 +199,10 @@ export function TsnGraph({
       EDGES.map((e) => ({
         ...e,
         key: `${e.from}-${e.to}`,
-        d: edgePath(e.from, e.to),
+        d: edgePath(e.from, e.to, L),
         crit: onCritical(e.from, e.to),
       })),
-    [],
+    [L],
   );
 
   // Points de message : la chaîne de freinage en continu (blanc), les autres flux plus espacés (gris).
@@ -176,7 +271,7 @@ export function TsnGraph({
 
   return (
     <svg
-      viewBox={`0 0 ${VB.w} ${VB.h}`}
+      viewBox={`0 0 ${L.vb.w} ${L.vb.h}`}
       className="h-auto w-full select-none"
       role="img"
       aria-label={d.cinema.graph.label}
@@ -204,10 +299,10 @@ export function TsnGraph({
       </defs>
 
       {/* En-têtes de colonnes */}
-      {COLS.map((c, i) => {
+      {L.heads.map((c, i) => {
         const count = NODES.filter((n) => PLACE[n.id].col === c.key).length;
         return (
-          <motion.g
+          <m.g
             key={c.key}
             initial={false}
             animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : -8 }}
@@ -215,20 +310,23 @@ export function TsnGraph({
           >
             <rect
               x={c.x}
-              y={34}
-              width={W}
+              y={c.y}
+              width={c.w}
               height={2.5}
               rx={1.25}
               fill={c.key === "network" ? "#fafafa" : "#4a4a4a"}
             />
-            <text
-              x={c.x}
-              y={54}
-              className="fill-[#a3a3a3] font-mono text-[11px] uppercase tracking-[0.14em]"
-            >
-              {d.cinema.graph.columns[c.key]} ({count})
-            </text>
-          </motion.g>
+            {/* Sur téléphone, le libellé est dessiné plus bas, par-dessus les liens. */}
+            {L.narrow ? null : (
+              <text
+                x={c.x}
+                y={c.y + 20}
+                className="fill-[#a3a3a3] font-mono text-[11px] uppercase tracking-[0.14em]"
+              >
+                {d.cinema.graph.columns[c.key]} ({count})
+              </text>
+            )}
+          </m.g>
         );
       })}
 
@@ -239,7 +337,7 @@ export function TsnGraph({
           const dim = !!focus && !on;
           const lit = e.crit || on;
           return (
-            <motion.path
+            <m.path
               key={e.key}
               ref={(el) => {
                 if (el) paths.current.set(e.key, el);
@@ -274,16 +372,39 @@ export function TsnGraph({
         })}
       </g>
 
+      {/* Points de message : au-dessus des liens, sous les libellés et les cartes. */}
+      <g ref={dots} />
+
+      {/* Téléphone : libellés des rangées par-dessus les liens qui les traversent, sur un fond plein
+          (largeur estimée : police à chasse fixe de 11 px, lettres espacées). */}
+      {L.narrow
+        ? L.heads.map((c) => {
+            const label = `${d.cinema.graph.columns[c.key]} (${NODES.filter((n) => PLACE[n.id].col === c.key).length})`;
+            return (
+              <g
+                key={`label-${c.key}`}
+                className="pointer-events-none"
+                style={{ opacity: visible ? 1 : 0, transition: "opacity 0.5s" }}
+              >
+                <rect x={c.x - 2} y={c.y + 4} width={label.length * 8.3 + 6} height={15} fill="#0a0a0a" />
+                <text x={c.x} y={c.y + 15} className="fill-[#a3a3a3] font-mono text-[11px] uppercase tracking-[0.14em]">
+                  {label}
+                </text>
+              </g>
+            );
+          })
+        : null}
+
       {/* Nœuds */}
       {NODES.map((n) => {
-        const { x, y } = box(n.id);
+        const { x, y } = L.box(n.id);
         const Icon = NODE_ICON[n.id];
         const isSel = n.id === selected;
         const isFocus = n.id === focus;
         const dim = !!focus && !isFocus && !neighbours.has(n.id);
         const name = d.car[n.id].name;
         return (
-          <motion.g
+          <m.g
             key={n.id}
             className="cursor-pointer"
             initial={false}
@@ -302,8 +423,8 @@ export function TsnGraph({
               data-graph-node={n.id}
               x={x}
               y={y}
-              width={W}
-              height={H}
+              width={L.w}
+              height={L.h}
               rx={6}
               fill="#151515"
               stroke={isFocus ? "#fafafa" : "#363636"}
@@ -313,39 +434,51 @@ export function TsnGraph({
               x={x}
               y={y}
               width={4}
-              height={H}
+              height={L.h}
               rx={2}
               fill={n.critical ? "#fafafa" : "#6e6e6e"}
             />
             <foreignObject
-              x={x + 12}
-              y={y + 11}
-              width={24}
-              height={24}
+              x={x + (L.narrow ? 10 : 12)}
+              y={y + (L.narrow ? 5 : 11)}
+              width={L.narrow ? 20 : 24}
+              height={L.narrow ? 20 : 24}
               className="pointer-events-none"
             >
               <div
-                className={`grid size-6 place-items-center rounded-md border ${isSel ? "border-fg bg-fg text-ink" : "border-line-2 bg-ink text-fg"}`}
+                className={`grid place-items-center rounded-md border ${L.narrow ? "size-5" : "size-6"} ${isSel ? "border-fg bg-fg text-ink" : "border-line-2 bg-ink text-fg"}`}
               >
-                <Icon className="size-3.5" strokeWidth={1.8} />
+                <Icon className={L.narrow ? "size-3" : "size-3.5"} strokeWidth={1.8} />
               </div>
             </foreignObject>
-            <text
-              x={x + 44}
-              y={y + 20}
-              className="pointer-events-none fill-[#fafafa] text-[12px] font-medium"
-            >
-              {name.length > 26 ? `${name.slice(0, 25)}…` : name}
-            </text>
-            <text
-              x={x + 44}
-              y={y + 35}
-              className="pointer-events-none fill-[#6e6e6e] font-mono text-[9.5px] uppercase tracking-[0.1em]"
-            >
-              {d.car[n.id].role}
-            </text>
+            {L.narrow ? (
+              <text className="pointer-events-none fill-[#fafafa] text-[10.5px] font-medium">
+                {twoLines(name).map((line, k) => (
+                  <tspan key={k} x={x + 10} y={y + 35 + k * 11.5}>
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            ) : (
+              <>
+                <text
+                  x={x + 44}
+                  y={y + 20}
+                  className="pointer-events-none fill-[#fafafa] text-[12px] font-medium"
+                >
+                  {name.length > 26 ? `${name.slice(0, 25)}…` : name}
+                </text>
+                <text
+                  x={x + 44}
+                  y={y + 35}
+                  className="pointer-events-none fill-[#858585] font-mono text-[9.5px] uppercase tracking-[0.1em]"
+                >
+                  {d.car[n.id].role}
+                </text>
+              </>
+            )}
             {certified ? (
-              <g transform={`translate(${x + W - 9}, ${y - 1})`}>
+              <g transform={`translate(${x + L.w - 9}, ${y - 1})`}>
                 <circle
                   r={7.5}
                   fill="#fafafa"
@@ -366,10 +499,9 @@ export function TsnGraph({
               </g>
             ) : null}
             <title>{name}</title>
-          </motion.g>
+          </m.g>
         );
       })}
-      <g ref={dots} />
     </svg>
   );
 }

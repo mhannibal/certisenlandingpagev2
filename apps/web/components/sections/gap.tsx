@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { Activity, Check, FlaskConical, Minus, Plus, Sigma } from "lucide-react";
 import { Reveal } from "@/components/ui/blur-text";
 import { Container, SPOTLIGHT, SectionHeading, SpotlightGlow, trackSpotlight } from "@/components/ui/primitives";
@@ -17,7 +17,7 @@ const APPROACH_ICONS = [FlaskConical, Activity, Sigma];
 export function Gap() {
   const t = useDict().gap;
   return (
-    <section className="bg-fade relative py-20 sm:py-28 lg:py-36">
+    <section className="bg-fade relative py-14 sm:py-24 md:py-28 lg:py-36">
       <Container>
         <SectionHeading index={sectionIndex("gap")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
 
@@ -51,7 +51,7 @@ export function Gap() {
                         className={`absolute inset-x-[12.5%] top-1/2 border-t ${r ? "border-fg/60" : "border-dashed border-line-2"}`}
                       />
                       {states.map((s, i) => (
-                        <motion.span
+                        <m.span
                           key={i}
                           initial={{ opacity: 0, scale: 0.6 }}
                           whileInView={{ opacity: 1, scale: 1 }}
@@ -62,7 +62,7 @@ export function Gap() {
                           }`}
                         >
                           {s === "ok" ? <Check className="size-4" strokeWidth={2.4} /> : <span className="font-mono text-sm">?</span>}
-                        </motion.span>
+                        </m.span>
                       ))}
                     </div>
                   </div>

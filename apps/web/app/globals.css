@@ -26,7 +26,8 @@
   --color-line-2: #363636;
   --color-fg: #fafafa;
   --color-muted: #a3a3a3;
-  --color-subtle: #6e6e6e;
+  /* #858585 : contraste AA (≥ 4,5:1) pour les petits textes, jusque sur les cartes #1b1b1b (12/11/2026). */
+  --color-subtle: #858585;
   /* Bleus de la marque (certisen.com), réservés à quelques détails : le site reste noir et blanc. */
   --color-brand: #102d6e;
   --color-accent: #50a2ff;
@@ -52,10 +53,12 @@
   --animate-nav-in: nav-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
   --animate-scene-in: scene-in 0.9s ease-out both;
 
+  /* Pas d'opacité nulle au départ : le texte est peint dès la première image (Google le compte alors
+     comme contenu principal), il apparaît flou et se met au net. */
   @keyframes intro-in {
     from {
-      opacity: 0;
-      transform: translateY(14px);
+      opacity: 0.25;
+      transform: translateY(10px);
       filter: blur(8px);
     }
   }

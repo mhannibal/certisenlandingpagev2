@@ -7,9 +7,11 @@ import {
   Check,
   Copy,
   Mail,
+  Globe,
   MapPin,
 } from "lucide-react";
-import { AnimatePresence, motion, useMotionValue, useScroll, useTransform } from "motion/react";
+import { AnimatePresence, useMotionValue, useScroll, useTransform } from "motion/react";
+import * as m from "motion/react-m";
 import {
   Fragment,
   useEffect,
@@ -22,6 +24,9 @@ import {
 import { Logo } from "@/components/logo";
 import { BlurText, Reveal } from "@/components/ui/blur-text";
 import { BrandLogo, LOGOS } from "@/components/ui/brand-logo";
+import SocialButton, { LinkedinIcon, type ShareAction } from "@/components/ui/social-button";
+import { copyText } from "@/lib/copy-text";
+import { MAPS_URL, POSTAL_ADDRESS } from "@/lib/site";
 import { Container, SectionLabel } from "@/components/ui/primitives";
 import { useDict, useI18n } from "@/lib/i18n/provider";
 import { sectionIndex } from "@/lib/sections";
@@ -86,7 +91,7 @@ function ContactLink({
   external?: boolean;
 }) {
   return (
-    <motion.a
+    <m.a
       variants={ROW}
       href={href}
       {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
@@ -104,27 +109,8 @@ function ContactLink({
         <ArrowUpRight className="size-3.5 transition-transform duration-300 ease-out group-hover:-translate-y-5 group-hover:translate-x-5" />
         <ArrowUpRight className="absolute size-3.5 -translate-x-5 translate-y-5 transition-transform duration-300 ease-out group-hover:translate-x-0 group-hover:translate-y-0" />
       </span>
-    </motion.a>
+    </m.a>
   );
-}
-
-/** Copie un texte dans le presse-papier (repli pour les contextes sans Clipboard API). */
-async function copyText(text: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand("copy");
-    ta.remove();
-    return ok;
-  }
 }
 
 /**
@@ -145,7 +131,7 @@ function CopyEmail() {
   };
 
   return (
-    <motion.button
+    <m.button
       type="button"
       variants={ROW}
       onClick={onCopy}
@@ -167,7 +153,7 @@ function CopyEmail() {
       <span className="relative mr-1 flex items-center gap-2.5">
         <AnimatePresence>
           {copied ? (
-            <motion.span
+            <m.span
               aria-hidden
               initial={{ opacity: 0, x: 8, filter: "blur(4px)" }}
               animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
@@ -176,7 +162,7 @@ function CopyEmail() {
               className="font-mono text-[11px] uppercase tracking-[0.12em] text-fg"
             >
               {t.copied}
-            </motion.span>
+            </m.span>
           ) : null}
         </AnimatePresence>
         <span
@@ -187,7 +173,7 @@ function CopyEmail() {
           }`}
         >
           <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span
+            <m.span
               key={copied ? "ok" : "copy"}
               initial={{ y: 14, opacity: 0, scale: 0.6 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -200,11 +186,114 @@ function CopyEmail() {
               ) : (
                 <Copy className="size-3.5" />
               )}
-            </motion.span>
+            </m.span>
           </AnimatePresence>
         </span>
       </span>
-    </motion.button>
+    </m.button>
+  );
+}
+
+/**
+ * Ligne « adresse » (demande de Lucas, 12/11) : toute la ligne ouvre Google Maps dans un nouvel
+ * onglet (lien étiré sur la ligne) ; le rond de droite est un bouton à part : quand on le survole,
+ * la flèche laisse place à l'icône copier, et un clic copie l'adresse postale (coche + « Copié ! »,
+ * comme l'e-mail). Sur écran tactile (pas de survol), le rond montre directement l'icône copier.
+ */
+function AddressRow() {
+  const t = useDict().contact;
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<number>(0);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  const onCopy = async () => {
+    if (!(await copyText(POSTAL_ADDRESS))) return;
+    setCopied(true);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <m.div variants={ROW} className="group relative flex items-center justify-between overflow-hidden py-4 text-fg">
+      <span className="pointer-events-none absolute inset-0 origin-left scale-x-0 bg-white/[0.035] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100" />
+      <span className="pointer-events-none absolute bottom-0 left-0 h-px w-full origin-left scale-x-0 bg-fg transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100" />
+      {/* Lien étiré : un clic n'importe où sur la ligne ouvre Google Maps. */}
+      <a
+        href={MAPS_URL}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`${t.address}, ${t.openMaps}`}
+        className="absolute inset-0 z-[1] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-fg"
+      />
+      <span className="pointer-events-none relative flex items-center gap-3 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-3">
+        <span className="text-muted transition-colors duration-300 group-hover:text-fg">
+          <MapPin className="size-4 shrink-0" strokeWidth={1.5} />
+        </span>
+        {t.address}
+      </span>
+      <span role="status" className="sr-only">
+        {copied ? t.copied : ""}
+      </span>
+      <span className="relative z-[2] mr-1 flex items-center gap-2.5">
+        <AnimatePresence>
+          {copied ? (
+            <m.span
+              aria-hidden
+              initial={{ opacity: 0, x: 8, filter: "blur(4px)" }}
+              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, x: 8, filter: "blur(4px)" }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="pointer-events-none font-mono text-[11px] uppercase tracking-[0.12em] text-fg"
+            >
+              {t.copied}
+            </m.span>
+          ) : null}
+        </AnimatePresence>
+        <button
+          type="button"
+          onClick={onCopy}
+          title={t.copyAddress}
+          aria-label={`${t.copyAddress} : ${POSTAL_ADDRESS}`}
+          className={`group/copy relative grid size-8 cursor-copy place-items-center overflow-hidden rounded-full border transition-colors duration-300 ${
+            copied
+              ? "border-fg bg-fg text-ink"
+              : "border-line-2 text-muted group-hover:border-fg group-hover:bg-fg group-hover:text-ink"
+          }`}
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            {copied ? (
+              <m.span
+                key="ok"
+                initial={{ y: 14, opacity: 0, scale: 0.6 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: -14, opacity: 0, scale: 0.6 }}
+                transition={{ type: "spring", stiffness: 420, damping: 26 }}
+                className="grid place-items-center"
+              >
+                <Check className="size-3.5" strokeWidth={2.6} />
+              </m.span>
+            ) : (
+              <m.span
+                key="idle"
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.6 }}
+                transition={{ duration: 0.2 }}
+                className="grid size-8 place-items-center"
+              >
+                {/* Flèche du lien (même animation que LinkedIn) : s'efface au survol du rond. */}
+                <span className="absolute inset-0 grid place-items-center transition-opacity duration-200 group-hover/copy:opacity-0 pointer-coarse:hidden">
+                  <ArrowUpRight className="size-3.5 transition-transform duration-300 ease-out group-hover:-translate-y-5 group-hover:translate-x-5" />
+                  <ArrowUpRight className="absolute size-3.5 -translate-x-5 translate-y-5 transition-transform duration-300 ease-out group-hover:translate-x-0 group-hover:translate-y-0" />
+                </span>
+                {/* Icône copier : entre au survol du rond ; toujours là sur écran tactile. */}
+                <Copy className="absolute size-3.5 scale-50 opacity-0 transition-[opacity,scale] duration-300 ease-out group-hover/copy:scale-100 group-hover/copy:opacity-100 pointer-coarse:scale-100 pointer-coarse:opacity-100" />
+              </m.span>
+            )}
+          </AnimatePresence>
+        </button>
+      </span>
+    </m.div>
   );
 }
 
@@ -225,39 +314,37 @@ export function Contact() {
       <Reveal>
         <SectionLabel index={sectionIndex("contact")}>{t.eyebrow}</SectionLabel>
       </Reveal>
-      <h2 className="mt-4 text-balance text-[2.5rem] font-medium leading-[1.05] tracking-[-0.04em] text-fg sm:mt-6 sm:text-6xl">
+      <h2 className="mt-3 text-balance text-[1.5rem] font-medium leading-[1.15] tracking-[-0.03em] text-fg sm:mt-6 sm:text-5xl sm:leading-[1.05] sm:tracking-[-0.04em] md:text-6xl">
         <BlurText text={t.title} />
         {/[　-鿿＀-￯]$/.test(t.title) ? null : " "}
         <BlurText text={t.accent} delay={0.15} wordClassName="text-subtle" />
       </h2>
       <Reveal delay={0.15}>
-        <p className="mt-4 max-w-md text-base text-muted sm:mt-6 sm:text-lg">{t.lead}</p>
+        <p className="mt-3 max-w-md text-[14px] text-muted sm:mt-6 sm:text-lg">{t.lead}</p>
       </Reveal>
     </>
   );
   const links = (
-    <motion.div
+    <m.div
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-60px" }}
       transition={{ staggerChildren: 0.09, delayChildren: 0.2 }}
-      className="divide-y divide-line border-y border-line text-sm"
+      className="w-full divide-y divide-line border-y border-line text-[13px] sm:text-sm"
     >
       <CopyEmail />
       <ContactLink href={LINKEDIN} external icon={<span className="w-4 text-center font-semibold">in</span>} label={t.linkedin} />
-      <motion.p variants={ROW} className="flex items-center gap-3 py-4 text-muted">
-        <MapPin className="size-4 shrink-0" strokeWidth={1.5} />
-        {t.address}
-      </motion.p>
-    </motion.div>
+      {/* Adresse : la ligne ouvre Google Maps ; le rond copie l'adresse. */}
+      <AddressRow />
+    </m.div>
   );
 
   // Formulaire désactivé (10/11/2026, Lucas) : titre à gauche, coordonnées à droite sur PC.
   if (!CONTACT_FORM) {
     return (
-      <section id="contact" className="relative py-20 sm:py-28 lg:py-36">
+      <section id="contact" className="relative py-14 sm:py-24 md:py-28 lg:py-36">
         <Container>
-          <div className="grid gap-10 lg:grid-cols-2 lg:items-end lg:gap-16">
+          <div className="grid gap-8 sm:gap-10 lg:grid-cols-2 lg:items-end lg:gap-16">
             <div>{heading}</div>
             {links}
           </div>
@@ -267,7 +354,7 @@ export function Contact() {
   }
 
   return (
-    <section id="contact" className="relative py-20 sm:py-28 lg:py-36">
+    <section id="contact" className="relative py-14 sm:py-24 md:py-28 lg:py-36">
       <Container>
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col">
@@ -404,12 +491,127 @@ function FooterWordmark() {
           </text>
           <g fill="url(#wm-fill)">{word}</g>
           {/* Halo très discret au survol, limité aux lettres */}
-          <motion.g clipPath="url(#wm-clip)" style={{ opacity: glow }} transition={{ duration: 0.4 }}>
-            <motion.circle cx={mx} cy={my} r={170} fill="url(#wm-spot)" opacity={0.09} />
-          </motion.g>
+          <m.g clipPath="url(#wm-clip)" style={{ opacity: glow }} transition={{ duration: 0.4 }}>
+            <m.circle cx={mx} cy={my} r={170} fill="url(#wm-spot)" opacity={0.09} />
+          </m.g>
         </svg>
       </div>
     </Container>
+  );
+}
+
+/**
+ * Adresse e-mail du pied de page : un clic la copie dans le presse-papiers (pas de lien mailto,
+ * sur tous les écrans). L'icône copier bascule en coche et une bulle « Copié ! » apparaît.
+ */
+function FooterEmail() {
+  const t = useDict().contact;
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<number>(0);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const onCopy = async () => {
+    if (!(await copyText(EMAIL))) return;
+    setCopied(true);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setCopied(false), 1800);
+  };
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      aria-label={`${t.copyEmail} : ${EMAIL}`}
+      className="group relative inline-flex cursor-copy items-center gap-1.5 transition-colors hover:text-fg"
+    >
+      {EMAIL}
+      <span aria-hidden className="relative inline-grid size-3.5 place-items-center overflow-hidden">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <m.span
+            key={copied ? "ok" : "copy"}
+            initial={{ y: 10, opacity: 0, scale: 0.6 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -10, opacity: 0, scale: 0.6 }}
+            transition={{ type: "spring", stiffness: 420, damping: 26 }}
+            className="grid place-items-center"
+          >
+            {copied ? (
+              <Check className="size-3.5 text-fg" strokeWidth={2.6} />
+            ) : (
+              <Copy className="size-3 text-subtle transition-colors group-hover:text-fg" />
+            )}
+          </m.span>
+        </AnimatePresence>
+      </span>
+      {/* Bulle « Copié ! » au-dessus de l'adresse */}
+      <span aria-hidden className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2">
+        <AnimatePresence>
+          {copied ? (
+            <m.span
+              initial={{ opacity: 0, y: 6, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="block whitespace-nowrap rounded-md bg-fg px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink shadow-[0_8px_20px_-8px_rgb(0_0_0/0.8)]"
+            >
+              {t.copied}
+            </m.span>
+          ) : null}
+        </AnimatePresence>
+      </span>
+      {/* Annonce pour les lecteurs d'écran */}
+      <span role="status" className="sr-only">
+        {copied ? t.copied : ""}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * Bouton « Partager » du pied de page (composant 21st.dev adapté) : e-mail, site et LinkedIn
+ * à la place de Twitter et Instagram, puis « copier » qui copie les trois.
+ */
+function FooterShare() {
+  const { dict, locale } = useI18n();
+  const t = dict.footer;
+  // Adresse du site tel qu'il est ouvert (localhost:3005 en test, www.certisen.com en ligne).
+  const site = () => `${window.location.origin}/${locale}`;
+  const actions: ShareAction[] = [
+    {
+      id: "email",
+      label: t.shareEmail,
+      icon: <Mail aria-hidden className="h-4 w-4" />,
+      data: () => ({ title: "CertiSen", text: EMAIL }),
+      copy: () => EMAIL,
+    },
+    {
+      id: "site",
+      label: t.shareSite,
+      icon: <Globe aria-hidden className="h-4 w-4" />,
+      data: () => ({ title: "CertiSen", text: t.shareText, url: site() }),
+      copy: site,
+    },
+    {
+      id: "linkedin",
+      label: t.shareLinkedin,
+      icon: <LinkedinIcon className="h-[15px] w-[15px]" />,
+      data: () => ({ title: "CertiSen · LinkedIn", url: LINKEDIN }),
+      copy: () => LINKEDIN,
+    },
+  ];
+  const copyAll: ShareAction = {
+    id: "all",
+    label: t.shareAll,
+    icon: null,
+    copy: () => `${t.shareText}\n${site()}\n${EMAIL}\n${LINKEDIN}`,
+  };
+  return (
+    <SocialButton
+      className="mx-auto sm:mx-0"
+      label={t.share}
+      groupLabel={t.shareGroup}
+      copiedLabel={t.shareCopied}
+      actions={actions}
+      copyAll={copyAll}
+    />
   );
 }
 
@@ -446,23 +648,26 @@ export function Footer() {
         <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[35vh] bg-gradient-to-b from-ink via-ink/70 to-transparent" />
 
         {/* Grand « CertiSen » : il monte et grandit pendant que le rideau se lève */}
-        <motion.div
+        <m.div
           style={{ scale: wordScale, y: wordY, opacity: wordOpacity }}
           className="pointer-events-auto z-0 order-last origin-bottom tall:absolute tall:inset-x-0 tall:bottom-0"
         >
           <FooterWordmark />
-        </motion.div>
+        </m.div>
 
 
         {/* Éléments d'origine du pied de page, au centre : financeurs, adresse, contact */}
-        <motion.div style={{ y: infoY, opacity: infoOpacity }} className="relative z-10 flex flex-1 flex-col justify-center tall:pt-16">
-        <div className="mx-auto grid w-fit max-w-[1200px] gap-x-24 gap-y-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-[auto_auto_auto]">
-          <div>
-            <Logo />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-subtle">{t.tagline}</p>
-            <p className="mt-8 font-mono text-[11px] uppercase tracking-[0.14em] text-subtle">{t.fundedBy}</p>
+        <m.div style={{ y: infoY, opacity: infoOpacity }} className="relative z-10 flex flex-1 flex-col justify-center tall:pt-16">
+        {/* Téléphone : bloc centré et resserré, adresse et contact côte à côte. */}
+        <div className="mx-auto grid w-full max-w-[22rem] grid-cols-2 gap-x-6 gap-y-6 px-5 py-8 text-center sm:w-fit sm:max-w-[1200px] sm:gap-x-24 sm:gap-y-10 sm:px-6 sm:py-14 sm:text-left lg:grid-cols-[auto_auto_auto]">
+          <div className="col-span-2 sm:col-span-1">
+            <div className="flex justify-center sm:block">
+              <Logo />
+            </div>
+            <p className="mx-auto mt-3 max-w-xs text-[13px] leading-relaxed text-subtle sm:mx-0 sm:mt-4 sm:text-sm">{t.tagline}</p>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.14em] text-subtle sm:mt-8 sm:text-[11px]">{t.fundedBy}</p>
             {/* Grille 2 × 2 : Inria, Inria Startup Studio / Pionniers de l'IA, Bpifrance */}
-            <div className="mt-3 grid w-fit grid-cols-2 items-center justify-items-start gap-x-10 gap-y-5">
+            <div className="mx-auto mt-3 grid w-fit grid-cols-2 items-center justify-items-center gap-x-8 gap-y-4 sm:mx-0 sm:justify-items-start sm:gap-x-10 sm:gap-y-5">
               {FUNDERS.map((f, i) => (
                 <Fragment key={f.name}>
                   {/* Pionniers de l'IA se place avant Bpifrance (3e case). */}
@@ -492,7 +697,7 @@ export function Footer() {
           </div>
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-subtle">{t.addressTitle}</p>
-            <address className="mt-3 text-sm not-italic leading-relaxed text-muted">
+            <address className="mt-2 text-[12.5px] not-italic leading-relaxed text-muted sm:mt-3 sm:text-sm">
               {t.address.map((line, i) => (
                 <span key={i} className="block">
                   {line}
@@ -502,23 +707,24 @@ export function Footer() {
           </div>
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-subtle">{t.contactTitle}</p>
-            <ul className="mt-3 space-y-1.5 text-sm text-muted">
+            <ul className="mt-2 space-y-1 text-[12.5px] text-muted sm:mt-3 sm:space-y-1.5 sm:text-sm">
               <li>
-                <a href={`mailto:${EMAIL}`} className="transition-colors hover:text-fg">
-                  {EMAIL}
-                </a>
+                <FooterEmail />
               </li>
               <li>
                 <a href={LINKEDIN} target="_blank" rel="noreferrer" className="transition-colors hover:text-fg">
                   LinkedIn
                 </a>
               </li>
+              <li className="pt-2.5 sm:pt-3">
+                <FooterShare />
+              </li>
             </ul>
           </div>
         </div>
-        </motion.div>
+        </m.div>
 
-        <Container className="relative z-10 flex flex-col items-center justify-between gap-4 border-t border-line py-5 text-xs text-subtle sm:flex-row">
+        <Container className="relative z-10 flex flex-col items-center justify-between gap-2.5 border-t border-line py-4 text-xs text-subtle sm:flex-row sm:gap-4 sm:py-5">
           <span>{t.rights}</span>
           <a href="#top" className="group inline-flex items-center gap-2.5 whitespace-nowrap transition-colors duration-300 hover:text-fg">
             <span className="relative">
@@ -535,7 +741,7 @@ export function Footer() {
       {/* Bord du rideau : il défile avec la page, au-dessus du pied de page fixé. Le fond
           passe donc toujours en douceur du noir de la section Contact au décor du pied de page. */}
       {/* Il s'efface à la fin du dévoilement pour ne pas assombrir les informations. */}
-      <motion.div
+      <m.div
         style={{ opacity: edgeOpacity }}
         className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[45vh] bg-gradient-to-b from-ink via-ink/80 to-transparent"
       />

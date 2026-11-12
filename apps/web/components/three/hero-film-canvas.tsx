@@ -1,6 +1,7 @@
 "use client";
 
-import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
+import { PerformanceMonitor } from "@react-three/drei";
+import { StudioEnvironment, type StudioPanel } from "./studio-environment";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Bloom, EffectComposer, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { useInView, useTransform, type MotionValue } from "motion/react";
@@ -29,6 +30,7 @@ import {
 import { pointAt, smoothstep, type Flow } from "@/lib/network";
 import { CarBody } from "./car-body";
 import { Precompile } from "./precompile";
+import { Staged } from "./staged";
 
 /*
  * Film du héros (prototype) : la voiture est assemblée dans le garage du
@@ -2751,17 +2753,18 @@ function Lighting({ progress }: { progress: MotionValue<number> }) {
       <ambientLight ref={amb} intensity={0.3} />
       <directionalLight ref={key} position={[4, 8, 5]} intensity={1.7} />
       <directionalLight ref={rim} position={[-6, 5, -7]} intensity={1.4} />
-      <Environment resolution={256} frames={1}>
-        {[-2.2, 0, 2.2].map((z) => (
-          <Lightformer key={z} form="rect" intensity={2.6} position={[0, 6, z]} scale={[12, 0.5, 1]} />
-        ))}
-        <Lightformer form="rect" intensity={1.4} position={[0, 1.6, 8]} scale={[18, 1.2, 1]} />
-        <Lightformer form="rect" intensity={1.4} position={[0, 1.6, -8]} scale={[18, 1.2, 1]} />
-        <Lightformer form="rect" intensity={0.8} position={[9, 2.4, 0]} scale={[7, 3, 1]} />
-      </Environment>
+      <StudioEnvironment panels={FILM_PANELS} />
     </>
   );
 }
+
+/** Panneaux lumineux de l'atelier (reflets de la voiture et des surfaces). */
+const FILM_PANELS: StudioPanel[] = [
+  ...[-2.2, 0, 2.2].map((z): StudioPanel => ({ position: [0, 6, z], scale: [12, 0.5], intensity: 2.6 })),
+  { position: [0, 1.6, 8], scale: [18, 1.2], intensity: 1.4 },
+  { position: [0, 1.6, -8], scale: [18, 1.2], intensity: 1.4 },
+  { position: [9, 2.4, 0], scale: [7, 3], intensity: 0.8 },
+];
 
 /** Poussière en suspension dans l'atelier : quelques points qui dérivent lentement. */
 function Dust({ progress }: { progress: MotionValue<number> }) {
@@ -2820,6 +2823,13 @@ export default function HeroFilmCanvas({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: "200px" });
+  // Pendant la construction par étapes, aucune image n'est dessinée (la scène est encore masquée) :
+  // le processeur ne sert qu'à construire. Le dessin reprend une fois les shaders compilés.
+  const [built, setBuilt] = useState(false);
+  const ready = useCallback(() => {
+    setBuilt(true);
+    onReady?.();
+  }, [onReady]);
   const ink = useMemo(themeInk, []);
   // Qualité selon l'appareil ; résolution abaissée si la fluidité chute.
   const quality = useMemo(renderQuality, []);
@@ -2828,35 +2838,39 @@ export default function HeroFilmCanvas({
   return (
     <div ref={ref} className={className}>
       <Canvas
-        frameloop={inView ? "always" : "never"}
+        frameloop={inView && built ? "always" : "never"}
         dpr={dpr}
         camera={{ position: SHOTS[0]!.pos, fov: FOV, near: 0.1, far: 220 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
         <color attach="background" args={[ink]} />
         <fog attach="fog" args={[ink, 22, 85]} />
-        <IntroCtx.Provider value={intro}>
-        <Lighting progress={progress} />
-        <Dust progress={progress} />
-        <Garage progress={progress} />
-        <Workshop progress={progress} />
-        <Engineers progress={progress} />
-        <Gantry progress={progress} />
-        <TestTarget progress={progress} />
-        <Road progress={progress} />
-        <Barrier progress={progress} />
-        <LatencyTrail progress={progress} />
-        <Vehicle progress={progress} />
-        <CameraRig progress={progress} />
-        <NodeProjector progress={progress} markers={markers} />
-        </IntroCtx.Provider>
         <PerformanceMonitor onDecline={lower} onFallback={lower} flipflops={3} />
         <EffectComposer multisampling={quality.msaa}>
           <Bloom mipmapBlur intensity={0.55} luminanceThreshold={0.95} luminanceSmoothing={0.2} />
           <ToneMapping mode={8} />
           <Vignette eskil={false} offset={0.2} darkness={0.6} />
         </EffectComposer>
-        <Precompile onReady={onReady} />
+        <IntroCtx.Provider value={intro}>
+          {/* Scène montée élément par élément (page réactive pendant la construction), puis
+              shaders compilés une fois tout en place. Ordre inchangé : la caméra est réglée
+              avant la projection des repères à chaque image. */}
+          <Staged then={<Precompile onReady={ready} />}>
+            <Lighting progress={progress} />
+            <Dust progress={progress} />
+            <Garage progress={progress} />
+            <Workshop progress={progress} />
+            <Engineers progress={progress} />
+            <Gantry progress={progress} />
+            <TestTarget progress={progress} />
+            <Road progress={progress} />
+            <Barrier progress={progress} />
+            <LatencyTrail progress={progress} />
+            <Vehicle progress={progress} />
+            <CameraRig progress={progress} />
+            <NodeProjector progress={progress} markers={markers} />
+          </Staged>
+        </IntroCtx.Provider>
       </Canvas>
     </div>
   );

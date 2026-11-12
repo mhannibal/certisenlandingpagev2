@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { useReducedMotion, useScroll, useTransform } from "motion/react";
+import * as m from "motion/react-m";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -28,7 +29,7 @@ export function BlurText({
   const cjk = !/\s/.test(text) && /[　-鿿＀-￯]/.test(text);
   const words = cjk ? Array.from(text) : text.split(" ");
   const sep = cjk ? "" : " ";
-  const Tag = motion[as];
+  const Tag = m[as];
   return (
     <Tag
       className={className}
@@ -40,7 +41,7 @@ export function BlurText({
     >
       {words.map((w, i) => (
         <span key={`${w}-${i}`} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
-          <motion.span
+          <m.span
             className={`inline-block ${wordClassName ?? ""}`}
             variants={{
               hidden: { y: "105%" },
@@ -49,7 +50,7 @@ export function BlurText({
           >
             {w}
             {i < words.length - 1 ? sep : ""}
-          </motion.span>
+          </m.span>
         </span>
       ))}
     </Tag>
@@ -80,9 +81,9 @@ export function Parallax({ children, offset = 16, className }: { children: React
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], reduce || narrow ? [0, 0] : [offset, -offset]);
   return (
-    <motion.div ref={ref} style={{ y }} className={className}>
+    <m.div ref={ref} style={{ y }} className={className}>
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -105,7 +106,7 @@ export function Reveal({
 }) {
   const shown = { opacity: 1, y: 0 };
   return (
-    <motion.div
+    <m.div
       className={className}
       initial={{ opacity: 0, y }}
       {...(show === undefined ? { whileInView: shown } : { animate: show ? shown : undefined })}
@@ -119,6 +120,6 @@ export function Reveal({
       ) : (
         children
       )}
-    </motion.div>
+    </m.div>
   );
 }

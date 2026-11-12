@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { useLenis } from "lenis/react";
 import {
   createContext,
@@ -53,7 +54,7 @@ export function useLoaderSignal(id: LoaderTask) {
  */
 function LoadingBadge({ progress, step, label }: { progress: number; step: string; label: string }) {
   return (
-    <motion.div
+    <m.div
       key="loading-badge"
       initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -63,7 +64,7 @@ function LoadingBadge({ progress, step, label }: { progress: number; step: strin
     >
       <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden className="shrink-0 text-fg">
         <path d={LOGO_PATHS.crown} fill="currentColor" />
-        <motion.path
+        <m.path
           d={LOGO_PATHS.shield}
           stroke="currentColor"
           strokeWidth="1.6"
@@ -87,7 +88,7 @@ function LoadingBadge({ progress, step, label }: { progress: number; step: strin
           <div className="h-px origin-left bg-fg transition-transform duration-200" style={{ transform: `scaleX(${progress / 100})` }} />
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 

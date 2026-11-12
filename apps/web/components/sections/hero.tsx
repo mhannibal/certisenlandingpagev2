@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { motion, useScroll, useTransform } from "motion/react";
+import { useScroll, useTransform } from "motion/react";
+import * as m from "motion/react-m";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { useRef } from "react";
 import { BlurText } from "@/components/ui/blur-text";
@@ -26,7 +27,7 @@ export function Hero() {
 
   return (
     <section ref={ref} id="top" className="relative isolate min-h-[100svh] overflow-hidden">
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: ready ? 1 : 0 }}
         transition={{ duration: 2, delay: 0.2 }}
@@ -36,16 +37,16 @@ export function Hero() {
         <WebGLGuard onFallback={onSceneReady} fallback={<div className="h-full w-full bg-dots opacity-60" />}>
           <NetworkCanvas className="h-full w-full" onReady={onSceneReady} />
         </WebGLGuard>
-      </motion.div>
+      </m.div>
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(90deg,#0a0a0a_0%,rgb(10_10_10/0.92)_32%,rgb(10_10_10/0.2)_70%,transparent)]" />
       <div className="pointer-events-none absolute inset-0 -z-10 bg-ink/50 lg:hidden" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-b from-transparent to-ink" />
 
-      <motion.div
+      <m.div
         style={{ y, opacity }}
         className="mx-auto flex min-h-[100svh] max-w-[1200px] flex-col justify-center px-6 pb-20 pt-32"
       >
-        <motion.a
+        <m.a
           href="#feuille-de-route"
           initial={{ opacity: 0, y: 10 }}
           animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
@@ -55,7 +56,7 @@ export function Hero() {
           <span className="rounded-full bg-fg px-2.5 py-0.5 font-medium text-ink">2026</span>
           {t.badge}
           <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-px group-hover:translate-x-px" />
-        </motion.a>
+        </m.a>
 
         <h1 className="max-w-4xl text-[clamp(2.75rem,6.6vw,5.25rem)] font-medium leading-[1] tracking-[-0.045em] text-fg">
           <BlurText text={t.title1} delay={0.45} play={ready} />
@@ -63,16 +64,16 @@ export function Hero() {
           <BlurText text={t.title2} delay={0.65} wordClassName="text-subtle" play={ready} />
         </h1>
 
-        <motion.p
+        <m.p
           initial={{ opacity: 0, y: 12 }}
           animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
           transition={{ delay: 0.95, duration: 0.8, ease: EASE }}
           className="mt-8 max-w-[34rem] text-pretty text-lg leading-relaxed text-muted"
         >
           {t.lead}
-        </motion.p>
+        </m.p>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 12 }}
           animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
           transition={{ delay: 1.1, duration: 0.8, ease: EASE }}
@@ -85,9 +86,9 @@ export function Hero() {
           <SecondaryButton href="#solution">
             <StatusDot /> {t.secondary}
           </SecondaryButton>
-        </motion.div>
+        </m.div>
 
-        <motion.dl
+        <m.dl
           initial={{ opacity: 0 }}
           animate={{ opacity: ready ? 1 : 0 }}
           transition={{ delay: 1.35, duration: 1 }}
@@ -101,8 +102,8 @@ export function Hero() {
               <dd className="text-[15px] text-fg">{f}</dd>
             </div>
           ))}
-        </motion.dl>
-      </motion.div>
+        </m.dl>
+      </m.div>
     </section>
   );
 }

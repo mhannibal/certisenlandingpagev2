@@ -3,7 +3,6 @@
 import {
   BadgeCheck,
   BrainCircuit,
-  ChevronDown,
   CloudDownload,
   FileCode2,
   Layers,
@@ -12,14 +11,8 @@ import {
   Timer,
   type LucideIcon,
 } from "lucide-react";
-import {
-  motion,
-  useAnimationFrame,
-  useMotionTemplate,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-} from "motion/react";
+import { useAnimationFrame, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "motion/react";
+import * as m from "motion/react-m";
 import { useRef, type PointerEvent, type RefObject } from "react";
 import { LogoMark } from "@/components/logo";
 import { Wire } from "@/components/ui/animated-beam";
@@ -41,26 +34,15 @@ function Node({
 }) {
   return (
     // Contenu centré dans la carte : icône et titre sur une ligne, détail en dessous.
-    <div ref={nodeRef} className="card relative z-10 rounded-lg px-3 py-3 text-center transition-colors hover:border-line-2 sm:p-4">
-      <div className="flex items-center justify-center gap-3">
-        <span className="card-inset grid size-8 shrink-0 place-items-center rounded-md text-fg">
-          <Icon className="size-4" strokeWidth={1.6} />
+    // Téléphone : tuile miniature (icône au-dessus du titre, détail réservé aux lecteurs d'écran).
+    <div ref={nodeRef} className="card relative z-10 rounded-md px-1 py-1.5 text-center transition-colors hover:border-line-2 sm:rounded-lg sm:p-4">
+      <div className="flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-3">
+        <span className="card-inset grid size-5 shrink-0 place-items-center rounded text-fg sm:size-8 sm:rounded-md">
+          <Icon className="size-3 sm:size-4" strokeWidth={1.6} />
         </span>
-        <p className="text-sm font-medium text-fg">{title}</p>
+        <p className="text-[9.5px] font-medium leading-tight text-fg sm:text-sm">{title}</p>
       </div>
-      <p className="mt-2 text-xs leading-relaxed text-muted sm:mt-2.5">{lines.join(" · ")}</p>
-    </div>
-  );
-}
-
-/** Connecteur vertical (tablette et mobile) : trait, impulsion qui descend, flèche. */
-function FlowConnector({ className }: { className?: string }) {
-  return (
-    <div aria-hidden className={`flex flex-col items-center py-1 lg:hidden ${className ?? ""}`}>
-      <span className="relative h-7 w-px overflow-hidden bg-line-2">
-        <span className="absolute inset-x-0 h-3 animate-drop bg-fg" />
-      </span>
-      <ChevronDown className="-mt-1.5 size-4 text-muted" />
+      <p className="sr-only text-xs leading-relaxed text-muted sm:not-sr-only sm:mt-2.5 sm:block">{lines.join(" · ")}</p>
     </div>
   );
 }
@@ -112,7 +94,7 @@ function CoreCard3D({
   return (
     <div
       ref={coreRef}
-      className="relative z-10 order-4 w-full sm:col-span-2 lg:order-2"
+      className="relative z-10 w-full"
       style={{ perspective: 900 }}
       onPointerEnter={() => (hovering.current = true)}
       onPointerLeave={() => {
@@ -122,7 +104,7 @@ function CoreCard3D({
       }}
       onPointerMove={onMove}
     >
-      <motion.div style={{ rotateX: srx, rotateY: sry, transformStyle: "preserve-3d" }} className="relative">
+      <m.div style={{ rotateX: srx, rotateY: sry, transformStyle: "preserve-3d" }} className="relative">
         {/* Tranche : couches décalées en profondeur, visibles quand la carte s'incline */}
         {[4, 8, 12].map((d, i) => (
           <div
@@ -139,30 +121,31 @@ function CoreCard3D({
         />
 
         {/* Face */}
-        <div className="relative overflow-hidden rounded-xl bg-fg p-6 text-center text-ink" style={{ transformStyle: "preserve-3d" }}>
-          <motion.div
+        {/* Téléphone : logo et « CertiSen Core » seulement ; le détail est repris sous le schéma. */}
+        <div className="relative overflow-hidden rounded-lg bg-fg px-2 py-4 text-center text-ink sm:rounded-xl sm:p-5 lg:p-6" style={{ transformStyle: "preserve-3d" }}>
+          <m.div
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-25 mix-blend-soft-light"
             style={{ background: glare }}
           />
           <div style={layer(45)}>
-            <LogoMark size={44} className="mx-auto text-ink drop-shadow-[0_8px_10px_rgb(0_0_0/0.25)]" animate={false} cutout="#fafafa" />
+            <LogoMark size={44} className="mx-auto size-8 text-ink sm:size-9 lg:size-11 drop-shadow-[0_8px_10px_rgb(0_0_0/0.25)]" animate={false} cutout="#fafafa" />
           </div>
           <div style={layer(28)}>
-            <p className="mt-3 text-lg font-semibold tracking-tight">CertiSen Core</p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/60">{label}</p>
+            <p className="mt-2 text-[12px] font-semibold tracking-tight sm:mt-3 sm:text-base lg:text-lg">CertiSen Core</p>
+            <p className="hidden font-mono text-[9px] uppercase tracking-[0.18em] text-ink/60 sm:block lg:text-[10px]">{label}</p>
           </div>
-          <p className="mt-4 text-sm text-ink/75" style={layer(14)}>
+          <p className="mt-3 hidden text-[13px] text-ink/75 sm:block lg:mt-4 lg:text-sm" style={layer(14)}>
             {desc}
           </p>
           <div
-            className="mt-5 rounded-md bg-ink px-3 py-2.5 font-mono text-[12px] text-fg shadow-[0_12px_20px_-8px_rgb(0_0_0/0.6)]"
+            className="mt-4 hidden rounded-md bg-ink px-2.5 py-2 font-mono text-[11px] text-fg shadow-[0_12px_20px_-8px_rgb(0_0_0/0.6)] sm:block lg:mt-5 lg:px-3 lg:py-2.5 lg:text-[12px]"
             style={layer(36)}
           >
             AcceptedByAI(x) ⇒ CertifiedByCore(x)
           </div>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -182,45 +165,41 @@ export function Solution() {
   const mon = useRef<HTMLDivElement>(null);
 
   return (
-    <section id="solution" className="relative py-20 sm:py-28 lg:py-36">
+    <section id="solution" className="relative py-14 sm:py-24 md:py-28 lg:py-36">
       <Container>
         <SectionHeading index={sectionIndex("solution")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
 
         <Reveal className="mt-10 sm:mt-16">
+          {/* Même schéma qu'au PC à toutes les tailles (demande de Lucas) : entrées | IA, Core, OTA | sorties,
+              reliés par les liaisons animées ; en miniature sur téléphone. */}
           <div
             ref={box}
-            className="bg-dots relative grid grid-cols-1 gap-3 rounded-xl border border-line bg-ink-2 p-4 sm:p-8 lg:grid-cols-[1fr_1.1fr_1fr] lg:gap-16 lg:p-10"
+            className="bg-dots relative grid grid-cols-[1fr_1.2fr_1fr] gap-x-4 rounded-xl border border-line bg-ink-2 px-2.5 py-3 sm:gap-x-10 sm:p-6 lg:grid-cols-[1fr_1.1fr_1fr] lg:gap-16 lg:p-10"
           >
-            {/* Entrées : 3 colonnes compactes sur tablette, pile verticale sur grand écran */}
-            <div className="relative grid gap-3 sm:grid-cols-3 lg:flex lg:flex-col lg:justify-center lg:gap-4">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-subtle sm:col-span-3">{t.inputs}</p>
+            {/* Entrées */}
+            <div className="relative flex flex-col justify-center gap-2 sm:gap-3 lg:gap-4">
+              <p className="text-center font-mono text-[8px] uppercase tracking-[0.12em] text-subtle sm:text-left sm:text-[11px] sm:tracking-[0.16em]">{t.inputs}</p>
               <Node nodeRef={model} icon={Route} title={n.model.title} lines={n.model.lines} />
               <Node nodeRef={reqs} icon={Timer} title={n.reqs.title} lines={n.reqs.lines} />
               <Node nodeRef={tools} icon={Layers} title={n.tools.title} lines={n.tools.lines} />
             </div>
 
-            <FlowConnector />
-
-            {/* Cœur : IA et OTA côte à côte au-dessus du Core sur tablette, en colonne sur grand écran */}
-            <div className="relative grid gap-3 sm:grid-cols-2 lg:flex lg:flex-col lg:items-center lg:justify-center lg:gap-12">
-              <div className="order-1 w-full">
+            {/* Cœur : IA au-dessus, Core au centre, OTA en dessous */}
+            <div className="relative flex flex-col items-center justify-center gap-6 sm:gap-10 lg:gap-12">
+              <div className="w-full">
                 <Node nodeRef={ai} icon={BrainCircuit} title={n.ai.title} lines={n.ai.lines} />
               </div>
 
-              <FlowConnector className="order-3 sm:col-span-2" />
-
               <CoreCard3D coreRef={core} label={t.core.label} desc={t.core.desc} />
 
-              <div className="order-2 w-full lg:order-3">
+              <div className="w-full">
                 <Node nodeRef={ota} icon={CloudDownload} title={n.ota.title} lines={n.ota.lines} />
               </div>
             </div>
 
-            <FlowConnector />
-
             {/* Sorties */}
-            <div className="relative grid gap-3 sm:grid-cols-3 lg:flex lg:flex-col lg:justify-center lg:gap-4">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-subtle sm:col-span-3">{t.outputs}</p>
+            <div className="relative flex flex-col justify-center gap-2 sm:gap-3 lg:gap-4">
+              <p className="text-center font-mono text-[8px] uppercase tracking-[0.12em] text-subtle sm:text-left sm:text-[11px] sm:tracking-[0.16em]">{t.outputs}</p>
               <Node nodeRef={cert} icon={BadgeCheck} title={n.cert.title} lines={n.cert.lines} />
               <Node nodeRef={conf} icon={FileCode2} title={n.conf.title} lines={n.conf.lines} />
               <Node nodeRef={mon} icon={RadioTower} title={n.mon.title} lines={n.mon.lines} />
@@ -237,9 +216,19 @@ export function Solution() {
           </div>
         </Reveal>
 
-        <Reveal delay={0.1} className="mt-5 text-sm text-muted">
+        <Reveal delay={0.1} className="mt-5 text-[13px] text-muted sm:text-sm">
           {t.footnote[0]}
           <span className="text-fg">{t.footnote[1]}</span>
+        </Reveal>
+        {/* Téléphone : détail de la carte CertiSen Core, retiré du schéma pour qu'il reste lisible. */}
+        <Reveal delay={0.15} className="mt-4 sm:hidden">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-subtle">
+            <span className="text-fg">CertiSen Core</span> · {t.core.label}
+          </p>
+          <p className="mt-1.5 text-[13px] text-muted">{t.core.desc}</p>
+          <p className="mt-2.5 inline-block rounded-md border border-line-2 bg-card px-2.5 py-1.5 font-mono text-[11px] text-fg">
+            AcceptedByAI(x) ⇒ CertifiedByCore(x)
+          </p>
         </Reveal>
       </Container>
     </section>

@@ -1,7 +1,8 @@
 "use client";
 
 import { ReactLenis, useLenis } from "lenis/react";
-import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { AnimatePresence, LazyMotion, MotionConfig } from "motion/react";
+import * as m from "motion/react-m";
 import { useEffect, useState, type ReactNode } from "react";
 import { LoaderProvider } from "./loader";
 
@@ -76,7 +77,7 @@ function AnchorNav() {
   return (
     <AnimatePresence>
       {cover ? (
-        <motion.div
+        <m.div
           key="cut"
           aria-hidden
           className="pointer-events-none fixed inset-0 z-[85] bg-ink"
@@ -90,12 +91,19 @@ function AnchorNav() {
   );
 }
 
+/** Chargement à part des fonctions d'animation (fonction stable, au niveau du module). */
+const loadMotionFeatures = () => import("@/lib/motion-features").then((mod) => mod.default);
+
 export function SmoothScroll({ children }: { children: ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
-      <ReactLenis root options={{ lerp: 0.09 }} />
-      <AnchorNav />
-      <LoaderProvider>{children}</LoaderProvider>
+      {/* Composants « m » + fonctions d'animation chargées à part (motion « LazyMotion ») ;
+          en développement, « strict » signale tout composant « motion » oublié. */}
+      <LazyMotion features={loadMotionFeatures} strict={process.env.NODE_ENV !== "production"}>
+        <ReactLenis root options={{ lerp: 0.09 }} />
+        <AnchorNav />
+        <LoaderProvider>{children}</LoaderProvider>
+      </LazyMotion>
     </MotionConfig>
   );
 }

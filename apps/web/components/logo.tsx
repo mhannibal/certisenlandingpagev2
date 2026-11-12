@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 
 import { LOGO_PATHS } from "@/lib/logo-paths";
 
@@ -27,7 +27,7 @@ export function LogoMark({
       <path d={LOGO_PATHS.crown} fill="currentColor" />
       <path d={LOGO_PATHS.pusher} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <path d={LOGO_PATHS.shield} fill="currentColor" />
-      <motion.path
+      <m.path
         d={LOGO_PATHS.check}
         stroke={cutout}
         strokeWidth="2.6"

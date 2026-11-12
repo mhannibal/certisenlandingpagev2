@@ -1,6 +1,6 @@
 "use client";
 
-import { Environment, Lightformer } from "@react-three/drei";
+import { StudioEnvironment, type StudioPanel } from "./studio-environment";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useInView } from "motion/react";
 import { useLayoutEffect, useMemo, useRef } from "react";
@@ -121,6 +121,14 @@ function Guides() {
   );
 }
 
+
+/** Panneaux lumineux du studio (reflets des colonnes). */
+const BAR_PANELS: StudioPanel[] = [
+  { position: [0, 5, 2], scale: [8, 1.5], intensity: 2 },
+  { position: [5, 1.5, 3], scale: [2, 4], intensity: 1.2 },
+  { position: [-5, 1.5, 3], scale: [2, 4], intensity: 0.6 },
+];
+
 export default function BarsCanvas({ className }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: "100px" });
@@ -151,11 +159,7 @@ export default function BarsCanvas({ className }: { className?: string }) {
           shadow-camera-bottom={-3}
         />
         <directionalLight position={[-4, 3, -3]} intensity={0.6} />
-        <Environment resolution={128} frames={1}>
-          <Lightformer form="rect" intensity={2} position={[0, 5, 2]} scale={[8, 1.5, 1]} />
-          <Lightformer form="rect" intensity={1.2} position={[5, 1.5, 3]} scale={[2, 4, 1]} />
-          <Lightformer form="rect" intensity={0.6} position={[-5, 1.5, 3]} scale={[2, 4, 1]} />
-        </Environment>
+        <StudioEnvironment panels={BAR_PANELS} />
         <Guides />
         <Bars start={seen} />
         {/* Sol : il ne garde que l'ombre portée des colonnes. */}

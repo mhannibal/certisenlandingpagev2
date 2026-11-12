@@ -212,6 +212,8 @@ const fr: Dictionary = {
     linkedin: "CertiSen sur LinkedIn",
     copyEmail: "Copier l'adresse e-mail",
     copied: "Copié !",
+    openMaps: "ouvrir dans Google Maps",
+    copyAddress: "Copier l'adresse",
     address: "655 av. de l'Europe, 38330 Montbonnot-Saint-Martin, France",
     form: {
       name: "Nom",
@@ -231,6 +233,14 @@ const fr: Dictionary = {
     contactTitle: "Contact",
     rights: "© 2026 CertiSen. Tous droits réservés.",
     top: "Haut de page",
+    share: "Partager",
+    shareGroup: "Partager CertiSen",
+    shareEmail: "Partager l'adresse e-mail",
+    shareSite: "Partager le site",
+    shareLinkedin: "Partager la page LinkedIn",
+    shareAll: "Copier le site, l'e-mail et LinkedIn",
+    shareText: "CertiSen, bâtir la confiance dans les véhicules définis par logiciel",
+    shareCopied: "Copié !",
   },
   heroFilm: {
     label: "De l'usine à la route, certifié par CertiSen",
@@ -241,6 +251,7 @@ const fr: Dictionary = {
     hint: "Cliquez sur un point pour voir ce que c'est",
     showDetails: "Détails",
     hideDetails: "Masquer",
+    swipe: "Glisser",
     lead: "CertiSen est la couche de vérification formelle continue pour les [[véhicules définis par logiciel]]. On garantit la sûreté temporelle et la cybersécurité [[après chaque mise à jour OTA]] avec des preuves mathématiques.",
     chapters: ["Assemblage", "Mise à jour OTA", "Certification", "Déploiement", "Sûreté temporelle", "Échéances", "Surveillance", "Cybersécurité", "Latence", "En route"],
     assembly: {

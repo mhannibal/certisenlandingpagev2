@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useInView } from "motion/react";
+import { useInView } from "motion/react";
+import * as m from "motion/react-m";
 import {
   BrainCircuit,
   Check,
@@ -52,7 +53,7 @@ function ProofVisual() {
   }, [inView]);
   const done = n >= PROOF.length;
   return (
-    <div ref={ref} className="card-inset relative mt-6 flex flex-1 flex-col overflow-hidden rounded-lg font-mono md:mt-3 lg:mt-5">
+    <div ref={ref} className="card-inset relative mt-4 flex flex-1 flex-col overflow-hidden rounded-lg font-mono sm:mt-6 md:mt-3 lg:mt-5">
       <div className="flex items-center gap-1.5 border-b border-line px-4 py-2.5">
         <span className="size-2 rounded-full bg-line-2" />
         <span className="size-2 rounded-full bg-line-2" />
@@ -60,18 +61,18 @@ function ProofVisual() {
         <span className="ml-3 text-[11px] text-subtle">certisen_core/tas.v</span>
       </div>
       {/* Hauteur des 8 lignes réservée d'avance : la carte ne grandit pas pendant la frappe. */}
-      <div className="min-h-[212px] flex-1 px-2.5 py-2.5 text-[11px] leading-6 sm:min-h-[248px] sm:px-4 sm:py-3 sm:text-[13px] sm:leading-7 md:min-h-[184px] md:py-2 md:text-[12px] md:leading-[21px]">
+      <div className="min-h-[170px] flex-1 px-2.5 py-2 text-[10.5px] leading-[20px] sm:min-h-[248px] sm:py-2.5 sm:px-4 sm:py-3 sm:text-[13px] sm:leading-7 md:min-h-[184px] md:py-2 md:text-[12px] md:leading-[21px]">
         {PROOF.slice(0, n).map((l, i) => (
-          <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="whitespace-pre">
+          <m.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="whitespace-pre">
             <span className="mr-2.5 select-none text-[#444] sm:mr-4">{String(i + 1).padStart(2, " ")}</span>
             <span className={l.dim ? "text-subtle" : "text-fg"}>{l.k}</span>
             <span className="text-muted">{l.r}</span>
-          </motion.div>
+          </m.div>
         ))}
         {!done ? <span className="ml-8 inline-block h-4 w-[7px] translate-y-0.5 animate-pulse bg-fg" /> : null}
       </div>
       {/* Bandeau toujours en place (seule son opacité change) : aucune variation de hauteur. */}
-      <motion.div
+      <m.div
         aria-hidden={!done}
         initial={false}
         animate={{ opacity: done ? 1 : 0, y: done ? 0 : 6 }}
@@ -79,7 +80,7 @@ function ProofVisual() {
         className="flex items-center gap-2 border-t border-line bg-fg px-4 py-2.5 text-[11px] text-ink sm:text-[12px]"
       >
         <Check className="size-4 shrink-0" /> <span className="truncate">{v.verified}</span>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -132,7 +133,7 @@ function DesignVisual() {
   return (
     <div className="card-inset bg-dots relative mt-5 h-32 overflow-hidden rounded-lg sm:mt-6 sm:h-40 md:mt-2 md:h-auto md:min-h-16 md:flex-1 lg:mt-6 lg:min-h-28">
       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 300 160" fill="none">
-        <motion.path
+        <m.path
           d="M60 80 L150 45 L240 80 L150 120 Z M150 45 L150 120"
           stroke="#6e6e6e"
           strokeWidth="1"
@@ -141,7 +142,7 @@ function DesignVisual() {
           transition={{ duration: 1.6 }}
         />
         {[[60, 80], [150, 45], [240, 80], [150, 120]].map(([x, y], i) => (
-          <motion.rect
+          <m.rect
             key={i}
             x={x! - 8}
             y={y! - 8}
@@ -157,14 +158,14 @@ function DesignVisual() {
           />
         ))}
       </svg>
-      <motion.div
+      <m.div
         className="absolute"
         animate={{ left: ["22%", "48%", "74%", "48%", "22%"], top: ["42%", "22%", "44%", "68%", "42%"] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
       >
         <MousePointer2 className="size-4 fill-fg text-fg" />
         <span className="ml-4 rounded bg-fg px-1.5 py-0.5 text-[10px] font-medium text-ink">{v.precertified}</span>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -193,7 +194,7 @@ function CyberVisual() {
 function EcosystemVisual() {
   const tools = useDict().features.visuals.eco;
   return (
-    <div className="relative mt-5 grid h-36 place-items-center [--eco-r:72px] sm:mt-6 sm:h-40 md:mt-2 md:h-auto md:min-h-[6.5rem] md:flex-1 md:[--eco-r:44px] lg:mt-6 lg:min-h-36 lg:[--eco-r:72px]">
+    <div className="relative mt-4 grid min-h-32 flex-1 place-items-center [--eco-r:60px] sm:mt-6 sm:min-h-40 sm:[--eco-r:72px] md:mt-2 md:min-h-[6.5rem] md:[--eco-r:44px] lg:mt-6 lg:min-h-36 lg:[--eco-r:72px]">
       <div className="absolute size-36 animate-[spin_30s_linear_infinite] rounded-full border border-dashed border-line-2 md:size-[88px] lg:size-36">
         {tools.map((t, i) => (
           <span
@@ -338,10 +339,10 @@ function Feature({
   show?: boolean;
 }) {
   return (
-    <Reveal delay={delay} show={show} className={`w-[84%] max-w-[340px] shrink-0 snap-start sm:w-[340px] md:w-auto md:max-w-none ${className ?? ""}`}>
+    <Reveal delay={delay} show={show} className={`w-[78%] max-w-[300px] shrink-0 snap-start sm:w-[340px] sm:max-w-[340px] md:w-auto md:max-w-none ${className ?? ""}`}>
       {/* Toutes les cartes du bento suivent la même disposition : texte en haut, visuel en
           dessous qui occupe le reste de la carte (les cartes larges ont juste plus de place). */}
-      <SpotlightCard className="flex h-full flex-col p-4 sm:p-6 md:p-3.5 lg:p-6">
+      <SpotlightCard className="flex h-full flex-col p-3.5 sm:p-6 md:p-3.5 lg:p-6">
         {/* Texte : glisse légèrement au survol (comme le bento d'Aceternity). */}
         <div className="transition-transform duration-300 md:group-hover:translate-x-1">
           <div className="md:flex md:items-center md:gap-2 lg:block">
@@ -358,9 +359,8 @@ function Feature({
   );
 }
 
-/** Marge de la piste : alignée sur le contenu de la page, la piste déborde jusqu'au bord droit. */
-const TRACK =
-  "px-[max(1.25rem,calc((100%_-_1200px)/2_+_1.25rem))] scroll-px-[max(1.25rem,calc((100%_-_1200px)/2_+_1.25rem))] sm:px-[max(1.5rem,calc((100%_-_1200px)/2_+_1.5rem))] sm:scroll-px-[max(1.5rem,calc((100%_-_1200px)/2_+_1.5rem))]";
+/** Marge de la piste : sur téléphone, chaque carte (78 %) s'arrête au centre ; ensuite, alignée sur le contenu de la page. */
+const TRACK = "px-[11%] scroll-px-[11%] sm:px-[max(1.5rem,calc((100%_-_1200px)/2_+_1.5rem))] sm:scroll-px-[max(1.5rem,calc((100%_-_1200px)/2_+_1.5rem))]";
 
 export function Features() {
   const t = useDict().features;
@@ -371,7 +371,7 @@ export function Features() {
   const inView = useInView(c.ref, { once: true, margin: "-80px" });
   const show = carousel ? inView : undefined;
   return (
-    <section id="plateforme" className="bg-fade relative py-20 sm:py-28 lg:py-36">
+    <section id="plateforme" className="bg-fade relative py-14 sm:py-24 md:py-28 lg:py-36">
       <Container>
         <SectionHeading index={sectionIndex("features")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
 
@@ -420,7 +420,7 @@ export function Features() {
       </div>
 
       {/* Points cliquables : un par arrêt du carrousel (téléphone). */}
-      <div className="mt-6 flex justify-center gap-1 md:hidden">
+      <div className="mt-6 flex justify-center md:hidden">
         {c.snaps.map((_, i) => (
           <button
             key={i}
@@ -428,7 +428,7 @@ export function Features() {
             aria-label={`${t.goTo} ${i + 1}`}
             aria-current={i === c.index}
             onClick={() => c.go(i)}
-            className="group grid h-6 cursor-pointer place-items-center px-0.5"
+            className="group grid h-6 min-w-6 cursor-pointer place-items-center px-0.5"
           >
             <span
               className={`block h-1 rounded-full transition-all duration-300 ${i === c.index ? "w-5 bg-fg" : "w-1.5 bg-line-2 group-hover:bg-subtle"}`}

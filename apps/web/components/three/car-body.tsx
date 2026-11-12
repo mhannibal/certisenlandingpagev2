@@ -1,6 +1,6 @@
 "use client";
 
-import { Environment, Lightformer } from "@react-three/drei";
+import { StudioEnvironment, type StudioPanel } from "./studio-environment";
 import { useFrame } from "@react-three/fiber";
 import type { MotionValue } from "motion/react";
 import { useMemo, useRef } from "react";
@@ -10,6 +10,7 @@ import { DESIGN } from "@/lib/car-design";
 import { smoothstep } from "@/lib/network";
 import { bodyMaterials, contactShadowTexture, fade } from "./car-materials";
 import { CarWheels } from "./car-wheels";
+import { decalMaterial } from "./car-branding";
 
 /** Durée (en avancement de défilement) du mouvement d'une pièce, puis de son effacement. */
 const MOVE = 0.1;
@@ -33,17 +34,20 @@ function StudioLights() {
       {/* Contre-jour haut, derrière la voiture : liseré clair sur le pavillon et les arêtes, qui la détache du fond noir. */}
       <directionalLight position={[-6, 5, -7]} intensity={1.6} />
       <directionalLight position={[-5, 3, -4]} intensity={0.7} />
-      <Environment resolution={256} frames={1}>
-        <Lightformer form="rect" intensity={2.4} position={[0, 6, 0]} scale={[10, 4, 1]} />
-        <Lightformer form="rect" intensity={1.4} position={[-3, 4, -7]} scale={[12, 2, 1]} />
-        <Lightformer form="rect" intensity={1.6} position={[0, 1.6, 7]} scale={[18, 1.3, 1]} />
-        <Lightformer form="rect" intensity={1.6} position={[0, 1.6, -7]} scale={[18, 1.3, 1]} />
-        <Lightformer form="rect" intensity={0.9} position={[8, 2.4, 0]} scale={[7, 3, 1]} />
-        <Lightformer form="rect" intensity={0.6} position={[-8, 2.4, 0]} scale={[7, 3, 1]} />
-      </Environment>
+      <StudioEnvironment panels={CAR_PANELS} />
     </>
   );
 }
+
+/** Panneaux lumineux du studio (reflets de la carrosserie). */
+const CAR_PANELS: StudioPanel[] = [
+  { position: [0, 6, 0], scale: [10, 4], intensity: 2.4 },
+  { position: [-3, 4, -7], scale: [12, 2], intensity: 1.4 },
+  { position: [0, 1.6, 7], scale: [18, 1.3], intensity: 1.6 },
+  { position: [0, 1.6, -7], scale: [18, 1.3], intensity: 1.6 },
+  { position: [8, 2.4, 0], scale: [7, 3], intensity: 0.9 },
+  { position: [-8, 2.4, 0], scale: [7, 3], intensity: 0.6 },
+];
 
 /** Plan de l'ombre de contact (x, z), centré sous la voiture. */
 const SHADOW_SIZE: [number, number] = [7.2, 3.8];
@@ -122,6 +126,8 @@ export function CarBody({
   const pieces = useMemo(() => buildBody(), []);
   // Un jeu de matériaux par pièce : chacune s'efface indépendamment.
   const mats = useMemo(() => pieces.map(() => bodyMaterials()), [pieces]);
+  // Marquages (emblème du capot, plaques) : un matériau par marquage, effacé avec sa pièce.
+  const decalMats = useMemo(() => pieces.map((pc) => pc.decals.map((d) => decalMaterial(d.kind))), [pieces]);
   const groups = useRef<(THREE.Group | null)[]>([]);
   const tmp = useMemo(() => new THREE.Vector3(), []);
 
@@ -137,6 +143,7 @@ export function CarBody({
       g.rotation.set(pc.rot.x * k, pc.rot.y * k, pc.rot.z * k);
       const o = 1 - smoothstep(pc.start + FADE_FROM, pc.start + FADE_TO, p);
       fade(mats[i]!.all, o);
+      fade(decalMats[i]!, o);
       g.visible = o > 0.01;
     });
   });
@@ -155,6 +162,9 @@ export function CarBody({
               <mesh key={k} geometry={pc.meshes[k]} material={m[k]} />
             ))}
             {pc.seams ? <lineSegments geometry={pc.seams} material={m.seams} /> : null}
+            {pc.decals.map((d, k) => (
+              <mesh key={`decal-${k}`} geometry={d.geometry} material={decalMats[i]![k]} renderOrder={2} />
+            ))}
           </group>
         );
       })}

@@ -88,12 +88,13 @@ export function SectionHeading({
   description?: string;
 }) {
   return (
-    <div className="grid gap-5 sm:gap-8 lg:grid-cols-12">
+    // Aligné à gauche à toutes les tailles ; titre à 24 px sur téléphone.
+    <div className="grid gap-4 sm:gap-8 lg:grid-cols-12">
       <div className="lg:col-span-7">
         <Reveal>
           <SectionLabel index={index}>{eyebrow}</SectionLabel>
         </Reveal>
-        <h2 className="mt-4 text-balance text-[1.875rem] font-medium leading-[1.08] tracking-[-0.035em] text-fg sm:mt-6 sm:text-5xl sm:leading-[1.05] lg:text-[3.5rem]">
+        <h2 className="mt-3 text-balance text-[1.5rem] font-medium leading-[1.15] tracking-[-0.03em] text-fg sm:mt-6 sm:text-4xl sm:leading-[1.08] sm:tracking-[-0.035em] md:text-5xl md:leading-[1.05] lg:text-[3.5rem]">
           <BlurText text={title} />
           {accent ? (
             <>
@@ -105,7 +106,7 @@ export function SectionHeading({
       </div>
       {description ? (
         <Reveal delay={0.15} className="flex items-end lg:col-span-5">
-          <p className="max-w-md text-pretty text-[15px] leading-relaxed text-muted sm:text-base lg:ml-auto">{description}</p>
+          <p className="max-w-md text-pretty text-[14px] leading-relaxed text-muted sm:text-base lg:ml-auto">{description}</p>
         </Reveal>
       ) : null}
     </div>

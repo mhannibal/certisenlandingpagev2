@@ -86,7 +86,7 @@ export function Wire({
   if (!geo) return null;
   return (
     <svg
-      className="pointer-events-none absolute left-0 top-0 z-20 hidden overflow-visible lg:block"
+      className="pointer-events-none absolute left-0 top-0 z-20 overflow-visible"
       width={geo.w}
       height={geo.h}
       viewBox={`0 0 ${geo.w} ${geo.h}`}

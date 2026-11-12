@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { WebGLGuard } from "@/components/three/webgl-guard";
 import { Reveal } from "@/components/ui/blur-text";
 import { Container, SPOTLIGHT, SectionHeading, SpotlightGlow, trackSpotlight } from "@/components/ui/primitives";
@@ -33,7 +33,7 @@ const BAR_STYLE = [
 export function Positioning() {
   const t = useDict().positioning;
   return (
-    <section className="relative py-20 sm:py-28 lg:py-36">
+    <section className="relative py-14 sm:py-24 md:py-28 lg:py-36">
       <Container>
         <SectionHeading index={sectionIndex("positioning")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
 
@@ -70,7 +70,7 @@ export function Positioning() {
               {/* Énoncé du théorème que le certificat établit (forme simplifiée). */}
               <pre className="card-inset overflow-x-auto px-4 py-4 font-mono text-[11px] leading-relaxed sm:px-6 sm:py-5 sm:text-[12.5px]">
                 {PROOF.map((line, i) => (
-                  <motion.span
+                  <m.span
                     key={i}
                     initial={{ opacity: 0, x: -6 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -83,7 +83,7 @@ export function Positioning() {
                         {text}
                       </span>
                     ))}
-                  </motion.span>
+                  </m.span>
                 ))}
               </pre>
               {t.proof.map((p) => (
@@ -109,7 +109,7 @@ function FlatBars() {
       ))}
       {BAR_STYLE.map((b, i) => (
         <div key={i} className="relative flex h-full flex-1 items-end justify-center">
-          <motion.div
+          <m.div
             initial={{ height: 0 }}
             whileInView={{ height: `${b.h}%` }}
             viewport={{ once: true }}

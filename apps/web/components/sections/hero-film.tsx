@@ -1,22 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useMotionValueEvent,
-  useScroll,
-  useSpring,
-  useTime,
-  useTransform,
-  type MotionValue,
-} from "motion/react";
+import { AnimatePresence, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTime, useTransform, type MotionValue } from "motion/react";
+import * as m from "motion/react-m";
 import {
   Activity,
   ArrowRight,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   CloudDownload,
   Cpu,
@@ -44,6 +37,7 @@ import { useLoaderSignal, useReady } from "@/components/loader";
 import { scrollToY } from "@/components/smooth-scroll";
 import { WebGLGuard } from "@/components/three/webgl-guard";
 import { FlowButton } from "@/components/ui/flow-button";
+import { FitCell, useAllFit } from "@/components/ui/fit-labels";
 import { StatusDot } from "@/components/ui/primitives";
 import { RippleButton } from "@/components/ui/ripple-button";
 import {
@@ -172,8 +166,8 @@ function StoryPanel({ progress }: { progress: MotionValue<number> }) {
   return (
     // Masqué aux lecteurs d'écran : son contenu change au défilement. Ils lisent <FilmTranscript />.
     <div aria-hidden className="pointer-events-none absolute inset-0 flex items-end px-3 pb-3 sm:px-8 sm:pb-24 lg:items-center lg:px-12 lg:pb-0">
-      <motion.div style={{ opacity, y, visibility }} className="card w-full overflow-hidden rounded-xl sm:w-[380px] lg:w-[400px]">
-        <motion.div animate={{ height: h ?? "auto" }} transition={{ duration: 0.55, ease: EASE }}>
+      <m.div style={{ opacity, y, visibility }} className="card mx-auto w-full max-w-[22rem] overflow-hidden rounded-xl sm:mx-0 sm:w-[380px] sm:max-w-none lg:w-[400px]">
+        <m.div animate={{ height: h ?? "auto" }} transition={{ duration: 0.55, ease: EASE }}>
           <div ref={inner} className="p-3.5 sm:p-4 lg:p-5">
             <div className="flex items-center justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-subtle">
               {s.index === undefined ? (
@@ -198,7 +192,7 @@ function StoryPanel({ progress }: { progress: MotionValue<number> }) {
               </span>
             </div>
             <AnimatePresence mode="wait" initial={false}>
-              <motion.div
+              <m.div
                 key={step}
                 initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -208,23 +202,33 @@ function StoryPanel({ progress }: { progress: MotionValue<number> }) {
                 <p className="mt-1.5 text-base font-medium tracking-tight text-fg sm:text-lg lg:mt-3 lg:text-2xl">{s.title}</p>
                 <p className="mt-1 text-[12.5px] leading-snug text-muted lg:mt-2 lg:text-sm lg:leading-relaxed">{s.text}</p>
                 {s.body ? <div className={`mt-3 lg:mt-5 ${details ? "" : "hidden lg:block"}`}>{s.body}</div> : null}
-              </motion.div>
+              </m.div>
             </AnimatePresence>
-            {s.body ? (
-              <button
-                type="button"
-                tabIndex={-1}
-                aria-expanded={details}
-                onClick={() => setDetails((v) => !v)}
-                className="pointer-events-auto mt-2 inline-flex cursor-pointer items-center gap-1 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-subtle transition-colors hover:text-fg lg:hidden"
-              >
-                {details ? t.hideDetails : t.showDetails}
-                <ChevronDown className={`size-3.5 transition-transform duration-300 ${details ? "rotate-180" : ""}`} />
-              </button>
-            ) : null}
+            {/* Téléphone et tablette : « Détails » à gauche, rappel du geste « glisser » à droite. */}
+            <div className="mt-2 flex items-center justify-between gap-3 lg:hidden">
+              {s.body ? (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-expanded={details}
+                  onClick={() => setDetails((v) => !v)}
+                  className="pointer-events-auto inline-flex cursor-pointer items-center gap-1 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-subtle transition-colors hover:text-fg"
+                >
+                  {details ? t.hideDetails : t.showDetails}
+                  <ChevronDown className={`size-3.5 transition-transform duration-300 ${details ? "rotate-180" : ""}`} />
+                </button>
+              ) : (
+                <span />
+              )}
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-subtle">
+                <ChevronLeft className="size-3" />
+                {t.swipe}
+                <ChevronRight className="size-3" />
+              </span>
+            </div>
           </div>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </div>
   );
 }
@@ -284,9 +288,9 @@ function NodeMarkers({ markers }: { markers: RefObject<MarkerMap> }) {
 /** Coche ronde qui apparaît. */
 function Tick({ opacity }: { opacity: MotionValue<number> }) {
   return (
-    <motion.span style={{ opacity }} className="grid size-5 shrink-0 place-items-center rounded-full bg-fg text-ink">
+    <m.span style={{ opacity }} className="grid size-5 shrink-0 place-items-center rounded-full bg-fg text-ink">
       <Check className="size-3" strokeWidth={3} />
-    </motion.span>
+    </m.span>
   );
 }
 
@@ -294,7 +298,7 @@ function Tick({ opacity }: { opacity: MotionValue<number> }) {
 function Bar({ value, className = "h-1" }: { value: MotionValue<number>; className?: string }) {
   return (
     <span className={`relative block overflow-hidden rounded-full bg-ink-2 ${className}`}>
-      <motion.span className="absolute inset-0 origin-left rounded-full bg-fg" style={{ scaleX: value }} />
+      <m.span className="absolute inset-0 origin-left rounded-full bg-fg" style={{ scaleX: value }} />
     </span>
   );
 }
@@ -310,9 +314,9 @@ function OtaPanel({ progress }: { progress: MotionValue<number> }) {
           <OtaRow key={pkg.node} progress={progress} i={i} name={t.packages[i]!} version={pkg.version} />
         ))}
       </ul>
-      <motion.p style={{ opacity: pending }} className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-muted">
+      <m.p style={{ opacity: pending }} className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-muted">
         <LoaderCircle className="size-3.5 animate-spin" /> {t.pending}
-      </motion.p>
+      </m.p>
     </div>
   );
 }
@@ -346,7 +350,7 @@ function InProgressPanel({ progress }: { progress: MotionValue<number> }) {
       <div className="card-inset rounded-lg p-3">
         <div className="flex justify-between font-mono text-[11px] text-subtle">
           <span>{t.scope}</span>
-          <motion.span className="text-fg">{pct}</motion.span>
+          <m.span className="text-fg">{pct}</m.span>
         </div>
         <Bar value={scan} className="mt-2 h-1" />
       </div>
@@ -364,12 +368,12 @@ function Step({ progress, at, label }: { progress: MotionValue<number>; at: numb
   return (
     <li className="flex items-center gap-3 text-[13px]">
       <span className="grid size-5 shrink-0">
-        <motion.span style={{ opacity: busy }} className="grid place-items-center text-subtle [grid-area:1/1]">
+        <m.span style={{ opacity: busy }} className="grid place-items-center text-subtle [grid-area:1/1]">
           <LoaderCircle className="size-4 animate-spin" />
-        </motion.span>
-        <motion.span style={{ opacity: done }} className="grid place-items-center rounded-full bg-fg text-ink [grid-area:1/1]">
+        </m.span>
+        <m.span style={{ opacity: done }} className="grid place-items-center rounded-full bg-fg text-ink [grid-area:1/1]">
           <Check className="size-3" strokeWidth={3} />
-        </motion.span>
+        </m.span>
       </span>
       <span className="text-fg">{label}</span>
     </li>
@@ -384,7 +388,7 @@ function CertifiedPanel({ progress }: { progress: MotionValue<number> }) {
   const rotate = useTransform(progress, [a, b], [-10, 0]);
   const opacity = useTransform(progress, [a, a + 0.012], [0, 1]);
   return (
-    <motion.div style={{ scale, rotate, opacity }} className="card-inset flex items-center gap-4 rounded-lg p-4">
+    <m.div style={{ scale, rotate, opacity }} className="card-inset flex items-center gap-4 rounded-lg p-4">
       <span className="grid size-12 shrink-0 place-items-center rounded-full bg-fg text-ink">
         <LogoMark size={26} animate={false} cutout="var(--color-fg)" />
       </span>
@@ -393,7 +397,7 @@ function CertifiedPanel({ progress }: { progress: MotionValue<number> }) {
         <p className="font-mono text-[11px] text-subtle">{t.proof}</p>
         <p className="mt-0.5 font-mono text-[11px] text-subtle">{t.id} · CS-2026-0412</p>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -409,9 +413,9 @@ function DeployPanel({ progress }: { progress: MotionValue<number> }) {
           <DeployRow key={pkg.node} progress={progress} i={i} name={d.heroFilm.ota.packages[i]!} target={d.car[pkg.node].name} />
         ))}
       </ul>
-      <motion.p style={{ opacity: active }} className="inline-flex items-center gap-1.5 rounded-md bg-fg px-2 py-1 text-[12px] font-medium text-ink">
+      <m.p style={{ opacity: active }} className="inline-flex items-center gap-1.5 rounded-md bg-fg px-2 py-1 text-[12px] font-medium text-ink">
         <ShieldCheck className="size-3.5" strokeWidth={2.2} /> {t.active}
-      </motion.p>
+      </m.p>
     </div>
   );
 }
@@ -421,12 +425,12 @@ function DeployRow({ progress, i, name, target }: { progress: MotionValue<number
   const done = useAfter(progress, b - 0.002);
   return (
     <li className="grid grid-cols-[1fr_auto] items-center gap-3 text-[13px]">
-      <motion.span style={{ opacity: go }} className="flex min-w-0 items-center gap-2 text-fg">
+      <m.span style={{ opacity: go }} className="flex min-w-0 items-center gap-2 text-fg">
         <Package className="size-3.5 shrink-0 text-muted" strokeWidth={1.6} />
         {name}
         <ArrowRight className="size-3 shrink-0 text-subtle" />
         <span className="truncate text-muted">{target}</span>
-      </motion.span>
+      </m.span>
       <Tick opacity={done} />
     </li>
   );
@@ -454,25 +458,25 @@ function SafetyPanel({ progress }: { progress: MotionValue<number> }) {
           ))}
         </div>
         <div className="relative mt-5 h-2 rounded-full bg-ink-2">
-          <motion.div className="absolute inset-y-0 left-0 rounded-full bg-fg" style={{ width: marker }} />
+          <m.div className="absolute inset-y-0 left-0 rounded-full bg-fg" style={{ width: marker }} />
           <span className="absolute -top-1.5 bottom-[-6px] right-0 w-px bg-muted" />
         </div>
         <div className="mt-2 flex justify-between font-mono text-[10px] uppercase tracking-wider text-subtle">
-          <motion.span style={{ opacity: done }} className="text-fg">
+          <m.span style={{ opacity: done }} className="text-fg">
             {LATENCY_BOUND} ms · {t.worst}
-          </motion.span>
+          </m.span>
           <span>
             {LATENCY_DEADLINE} ms · {t.deadline}
           </span>
         </div>
       </div>
       <div className="flex flex-wrap gap-2 text-[12px]">
-        <motion.span style={{ opacity: standstill }} className="inline-flex items-center gap-1.5 rounded-md border border-line-2 px-2 py-1 text-fg">
+        <m.span style={{ opacity: standstill }} className="inline-flex items-center gap-1.5 rounded-md border border-line-2 px-2 py-1 text-fg">
           <Check className="size-3.5" strokeWidth={3} /> {t.standstill}
-        </motion.span>
-        <motion.span style={{ opacity: road }} className="inline-flex items-center gap-1.5 rounded-md bg-fg px-2 py-1 font-medium text-ink">
+        </m.span>
+        <m.span style={{ opacity: road }} className="inline-flex items-center gap-1.5 rounded-md bg-fg px-2 py-1 font-medium text-ink">
           <Radar className="size-3.5" strokeWidth={2} /> {t.road}
-        </motion.span>
+        </m.span>
       </div>
     </div>
   );
@@ -480,9 +484,9 @@ function SafetyPanel({ progress }: { progress: MotionValue<number> }) {
 function Stage({ progress, at, label }: { progress: MotionValue<number>; at: number; label: string }) {
   const opacity = useTransform(progress, [at, at + 0.003], [0.35, 1]);
   return (
-    <motion.span style={{ opacity }} className="rounded-md border border-line-2 px-1 py-1.5 text-[11px] text-fg">
+    <m.span style={{ opacity }} className="rounded-md border border-line-2 px-1 py-1.5 text-[11px] text-fg">
       {label}
-    </motion.span>
+    </m.span>
   );
 }
 
@@ -557,7 +561,7 @@ function Monitored({ name, symbol, phase, ok }: { name: string; symbol: string; 
         |{name}| <span className="text-muted">&lt;</span> <span className="font-serif text-base italic">{symbol}</span>
       </p>
       <div className="relative mt-6 h-2 rounded-full bg-ink-2">
-        <motion.div className="absolute inset-y-0 left-0 rounded-full bg-fg" style={{ width }} />
+        <m.div className="absolute inset-y-0 left-0 rounded-full bg-fg" style={{ width }} />
         <span className="absolute -top-1.5 bottom-[-6px] left-[86%] w-px bg-muted" />
         <span className="absolute -top-5 left-[86%] -translate-x-1/2 font-serif text-[13px] italic text-muted">{symbol}</span>
       </div>
@@ -609,10 +613,10 @@ function LogLine({ progress, at, text, strong }: { progress: MotionValue<number>
   const opacity = useTransform(progress, [at, at + 0.003], [0, 1]);
   const x = useTransform(progress, [at, at + 0.003], [-6, 0]);
   return (
-    <motion.p style={{ opacity, x }} className={strong ? "text-fg" : "text-muted"}>
+    <m.p style={{ opacity, x }} className={strong ? "text-fg" : "text-muted"}>
       <span className="text-subtle">› </span>
       {text}
-    </motion.p>
+    </m.p>
   );
 }
 function CyberRow({
@@ -640,13 +644,13 @@ function CyberRow({
   const steps = [labels.watching, labels.detected, labels.blocked];
   const StateIcon = state === 2 ? ShieldBan : state === 1 ? Siren : Activity;
   return (
-    <motion.li style={{ opacity: active }} className="card-inset rounded-lg p-3">
+    <m.li style={{ opacity: active }} className="card-inset rounded-lg p-3">
       <div className="flex items-center justify-between gap-3">
         <span className="flex items-center gap-2 text-[13px] font-medium text-fg">
           <Icon className="size-4 text-muted" strokeWidth={1.6} /> {k}
         </span>
         <AnimatePresence mode="popLayout" initial={false}>
-          <motion.span
+          <m.span
             key={state}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
@@ -657,7 +661,7 @@ function CyberRow({
             }`}
           >
             <StateIcon className="size-3" strokeWidth={2.2} /> {steps[state]}
-          </motion.span>
+          </m.span>
         </AnimatePresence>
       </div>
       <p className="mt-1 text-[12px] leading-snug text-muted">{d}</p>
@@ -667,7 +671,7 @@ function CyberRow({
           <span key={s} className={`h-1 rounded-full transition-colors duration-500 ${i <= state ? "bg-fg" : "bg-ink-2"}`} />
         ))}
       </div>
-    </motion.li>
+    </m.li>
   );
 }
 
@@ -700,7 +704,7 @@ function LatencyChart({ progress }: { progress: MotionValue<number> }) {
           strokeWidth={1}
           strokeDasharray="4 4"
         />
-        <motion.path d={d} fill="none" stroke="var(--color-fg)" strokeWidth={1.6} strokeLinejoin="round" style={{ pathLength: draw }} />
+        <m.path d={d} fill="none" stroke="var(--color-fg)" strokeWidth={1.6} strokeLinejoin="round" style={{ pathLength: draw }} />
       </svg>
       <div className="mt-2 flex flex-wrap justify-between gap-2 font-mono text-[10px] uppercase tracking-wider text-subtle">
         <span>
@@ -711,14 +715,14 @@ function LatencyChart({ progress }: { progress: MotionValue<number> }) {
         </span>
         <span>{t.axis} →</span>
       </div>
-      <motion.div style={{ opacity: stats }} className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-3 text-[12px]">
+      <m.div style={{ opacity: stats }} className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-3 text-[12px]">
         <span className="text-muted">
           {t.max} <span className="font-mono text-fg">{LATENCY_STATS.max.toFixed(2)} ms</span>
         </span>
         <span className="text-muted">
           {t.mean} <span className="font-mono text-fg">{LATENCY_STATS.mean.toFixed(2)} ms</span>
         </span>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -751,7 +755,7 @@ function Finale({ progress }: { progress: MotionValue<number> }) {
   const style = useFade(progress, CARDS.finale, 0.02);
   return (
     <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
-      <motion.div
+      <m.div
         style={style}
         className="flex max-w-2xl flex-col items-center rounded-3xl bg-[radial-gradient(closest-side,rgb(10_10_10/0.8),transparent)] px-4 py-10 text-center sm:px-10 sm:py-14"
       >
@@ -766,37 +770,64 @@ function Finale({ progress }: { progress: MotionValue<number> }) {
         <FlowButton href="#contact" className="pointer-events-auto mt-8">
           {t.cta}
         </FlowButton>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
 
 /* ---------------- Chapitres ---------------- */
+/** Position de défilement d'un instant `p` du film (0 → 1, après l'intro). */
+function filmY(section: HTMLElement, p: number) {
+  const top = section.getBoundingClientRect().top + window.scrollY;
+  return top + (INTRO + p * (1 - INTRO)) * (section.offsetHeight - window.innerHeight);
+}
+
+/** Écart minimal (px) d'un glissement horizontal pour changer d'étape. */
+const SWIPE_MIN_PX = 48;
+
+/**
+ * Étape voisine du film (glisser sur téléphone) : `dir` = +1 suivante, -1 précédente.
+ * Depuis l'intro, on entre dans la première étape ; avant la première, retour à l'intro ;
+ * après la dernière, le final.
+ */
+function stepFilm(section: HTMLElement, film: number, intro: number, dir: 1 | -1) {
+  const cur = intro < 0.99 ? -1 : CHAPTERS.reduce((acc, ch, i) => (film >= ch.at - 0.002 ? i : acc), -1);
+  const next = cur + dir;
+  if (next < 0) return cur >= 0 ? scrollToY(section.getBoundingClientRect().top + window.scrollY) : undefined;
+  scrollToY(filmY(section, next >= CHAPTERS.length ? 1 : CHAPTERS[next]!.go));
+}
+
 function Chapters({
   progress,
   intro,
   section,
+  seek,
 }: {
   progress: MotionValue<number>;
   intro: MotionValue<number>;
   section: RefObject<HTMLElement | null>;
+  /** Lecture automatique en cours : saute au point donné sans l'arrêter (faux si pas de lecture). */
+  seek: (y: number) => boolean;
 }) {
   const shown = useTransform(intro, [0.55, 0.9], [0, 1]);
   const labels = useDict().heroFilm.chapters;
+  // Noms des chapitres en entier s'ils tiennent tous, sinon leur numéro (tablette, petit PC).
+  const { cells, probes, fit } = useAllFit(labels.join("|"));
   const [current, setCurrent] = useState(0);
   useMotionValueEvent(progress, "change", (p) => {
     const c = CHAPTERS.reduce((acc, ch, i) => (p >= ch.at ? i : acc), 0);
     setCurrent((prev) => (prev === c ? prev : c));
   });
-  const go = (p: number) => {
+  // En lecture automatique : début exact de la scène, et la lecture continue.
+  // Sinon : défilement vers la scène déjà installée, comme avant (la lecture n'est pas relancée).
+  const go = (i: number) => {
     const el = section.current;
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY;
-    const y = top + (INTRO + p * (1 - INTRO)) * (el.offsetHeight - window.innerHeight);
-    scrollToY(y);
+    if (seek(filmY(el, CHAPTERS[i]!.at))) return;
+    scrollToY(filmY(el, CHAPTERS[i]!.go));
   };
   return (
-    <motion.div style={{ opacity: shown }} className="absolute inset-x-0 bottom-5 mx-auto hidden max-w-[1280px] grid-cols-10 gap-2.5 px-6 md:grid">
+    <m.div style={{ opacity: shown }} className="absolute inset-x-0 bottom-5 mx-auto hidden max-w-[1280px] grid-cols-10 gap-2.5 px-6 md:grid">
       {CHAPTERS.map((ch, i) => (
         <ChapterButton
           key={ch.at}
@@ -804,12 +835,16 @@ function Chapters({
           from={ch.at}
           to={CHAPTERS[i + 1]?.at ?? 1}
           label={labels[i]!}
+          num={String(i + 1).padStart(2, "0")}
+          fit={fit}
+          cellRef={(el) => void (cells.current[i] = el)}
+          probeRef={(el) => void (probes.current[i] = el)}
           Icon={ch.Icon}
           on={i === current}
-          onClick={() => go(ch.go)}
+          onClick={() => go(i)}
         />
       ))}
-    </motion.div>
+    </m.div>
   );
 }
 function ChapterButton({
@@ -817,6 +852,10 @@ function ChapterButton({
   from,
   to,
   label,
+  num,
+  fit,
+  cellRef,
+  probeRef,
   Icon,
   on,
   onClick,
@@ -825,6 +864,10 @@ function ChapterButton({
   from: number;
   to: number;
   label: string;
+  num: string;
+  fit: boolean;
+  cellRef: (el: HTMLSpanElement | null) => void;
+  probeRef: (el: HTMLSpanElement | null) => void;
   Icon: LucideIcon;
   on: boolean;
   onClick: () => void;
@@ -833,13 +876,13 @@ function ChapterButton({
   return (
     <button type="button" onClick={onClick} title={label} className="group flex min-w-0 cursor-pointer flex-col gap-2 text-left">
       <span className="relative block h-[2px] w-full overflow-hidden rounded-full bg-line-2">
-        <motion.span style={{ scaleX: fill }} className="absolute inset-0 origin-left bg-fg" />
+        <m.span style={{ scaleX: fill }} className="absolute inset-0 origin-left bg-fg" />
       </span>
       <span
         className={`flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors duration-500 group-hover:text-fg ${on ? "text-fg" : "text-subtle"}`}
       >
         <Icon className="size-3 shrink-0" />
-        <span className="truncate">{label}</span>
+        <FitCell full={label} short={num} fit={fit} cellRef={cellRef} probeRef={probeRef} className="flex-1" />
       </span>
     </button>
   );
@@ -882,12 +925,19 @@ function IntroOverlay({ intro }: { intro: MotionValue<number> }) {
   return (
     <>
       {/* Voile à gauche pour la lisibilité du texte */}
-      <motion.div
+      <m.div
         style={{ opacity }}
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgb(10_10_10/0.85)_0%,rgb(10_10_10/0.55)_35%,transparent_70%)]"
       />
+      {/* Téléphone et tablette : le texte couvre tout l'écran, les traits du réseau passent derrière.
+          Flou léger de la scène pendant l'intro seulement ; il s'efface avec le texte (puis disparaît). */}
+      <m.div
+        aria-hidden
+        style={{ opacity, visibility }}
+        className="pointer-events-none absolute inset-0 bg-ink/30 backdrop-blur-[6px] lg:hidden"
+      />
       <div className="pointer-events-none absolute inset-0 flex items-center px-6 lg:px-12">
-        <motion.div style={{ opacity, y, filter, visibility }} className="mx-auto w-full max-w-[1200px]">
+        <m.div style={{ opacity, y, filter, visibility }} className="mx-auto w-full max-w-[1200px]">
           {/* Bloc assez large pour le titre sur deux lignes (≈ 840 px à 80 px de corps) ; accroche et repères gardent leur largeur. */}
           <div className="max-w-4xl">
             <p
@@ -922,7 +972,7 @@ function IntroOverlay({ intro }: { intro: MotionValue<number> }) {
               ))}
             </ul>
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </>
   );
@@ -950,7 +1000,7 @@ function useAutoplay(section: RefObject<HTMLElement | null>) {
   const lenis = useLenis();
   const ready = useReady();
   const [playing, setPlaying] = useState(false);
-  const ctl = useRef<{ start: (delay?: number) => void } | null>(null);
+  const ctl = useRef<{ start: (delay?: number) => void; seek: (y: number) => boolean } | null>(null);
   useEffect(() => {
     const el = section.current;
     if (!lenis || !el) return;
@@ -1043,7 +1093,22 @@ function useAutoplay(section: RefObject<HTMLElement | null>) {
         raf = requestAnimationFrame(step);
       }, delay);
     };
-    ctl.current = { start };
+    // Saut pendant la lecture automatique (chapitre cliqué) : la lecture continue depuis ce point.
+    const seek = (target: number) => {
+      if (!active) return false;
+      paused = false;
+      window.clearTimeout(resumeTimer);
+      y = Math.min(end(), Math.max(0, target));
+      lenis.scrollTo(y, { immediate: true, force: true });
+      // Le ressort du film se pose d'un coup sur la nouvelle scène (pas de défilement accéléré).
+      window.dispatchEvent(new Event("herofilm:jump"));
+      last = 0;
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+      raf = requestAnimationFrame(step);
+      return true;
+    };
+    ctl.current = { start, seek };
     return () => {
       stop();
       ctl.current = null;
@@ -1057,7 +1122,7 @@ function useAutoplay(section: RefObject<HTMLElement | null>) {
     // Le texte de l'intro est affiché dès l'arrivée : on laisse au moins ~3 s pour le lire avant le départ.
     ctl.current?.start(Math.max(AUTOPLAY_DELAY_MS, AUTOPLAY_MIN_START_MS - performance.now()));
   }, [lenis, ready]);
-  return { playing, resume: () => ctl.current?.start(0) };
+  return { playing, resume: () => ctl.current?.start(0), seek: (y: number) => ctl.current?.seek(y) ?? false };
 }
 
 /** Vrai quand la page n'a pas défilé depuis `ms` millisecondes. */
@@ -1089,7 +1154,7 @@ function AutoplayButton({ show, label, short, onClick }: { show: boolean; label:
   return (
     <AnimatePresence>
       {show ? (
-        <motion.div
+        <m.div
           key="autoplay"
           initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
           // Filtre retiré à la fin : sinon le flou d'arrière-plan du bouton ne verrait plus la scène.
@@ -1101,7 +1166,7 @@ function AutoplayButton({ show, label, short, onClick }: { show: boolean; label:
           <FlowButton onClick={onClick} icon={Play} filled aria-label={label} title={label}>
             {short}
           </FlowButton>
-        </motion.div>
+        </m.div>
       ) : null}
     </AnimatePresence>
   );
@@ -1116,7 +1181,7 @@ export function HeroFilm() {
   const t = useDict().heroFilm;
   const onSceneReady = useLoaderSignal("heroScene");
   const ref = useRef<HTMLElement>(null);
-  const { playing: autoplay, resume } = useAutoplay(ref);
+  const { playing: autoplay, resume, seek } = useAutoplay(ref);
   const idle = useScrollIdle();
   const ready = useReady();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
@@ -1158,10 +1223,48 @@ export function HeroFilm() {
     return () => window.removeEventListener("herofilm:jump", onJump);
   }, [progress]);
   const bar = useTransform(progress, [0, 1], [0, 1]);
+  // Écran tactile : glisser à gauche ou à droite passe à l'étape suivante ou précédente du film
+  // (le défilement vertical reste le geste principal ; un glissement net à l'horizontale suffit).
+  const stage = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    let x0 = 0;
+    let y0 = 0;
+    let t0 = 0;
+    let on = false;
+    const start = (e: TouchEvent) => {
+      on = e.touches.length === 1;
+      if (!on) return;
+      x0 = e.touches[0]!.clientX;
+      y0 = e.touches[0]!.clientY;
+      t0 = performance.now();
+    };
+    const end = (e: TouchEvent) => {
+      if (!on || !ref.current) return;
+      on = false;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - x0;
+      const dy = t.clientY - y0;
+      if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < Math.abs(dy) * 1.5 || performance.now() - t0 > 900) return;
+      const section = ref.current;
+      const f = film.get();
+      const i = intro.get();
+      // Après le traitement du même geste par Lenis (il arrête tout défilement animé à la fin d'un toucher).
+      window.setTimeout(() => stepFilm(section, f, i, dx < 0 ? 1 : -1), 0);
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchend", end, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", start);
+      el.removeEventListener("touchend", end);
+    };
+  }, [film, intro]);
 
   return (
     <section ref={ref} id="top" data-skip-on-jump aria-label={t.label} className="relative h-[1300vh]">
-      <div className="sticky top-0 h-[100svh] overflow-hidden">
+      <div ref={stage} className="sticky top-0 h-[100svh] overflow-hidden">
         {/* La scène 3D apparaît en fondu derrière le texte, une fois prête (shaders compilés). */}
         <div data-scene aria-hidden className={`absolute inset-0 ${ready ? "animate-scene-in motion-reduce:animate-none" : "opacity-0"}`}>
           <WebGLGuard onFallback={onSceneReady} fallback={<div className="absolute inset-0 bg-dots opacity-60" />}>
@@ -1171,12 +1274,12 @@ export function HeroFilm() {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-ink to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-ink to-transparent" />
 
-        <motion.div
+        <m.div
           style={{ opacity: hintPoints }}
-          className="pointer-events-none absolute left-1/2 top-24 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.14em] text-subtle"
+          className="pointer-events-none absolute left-1/2 top-24 w-[calc(100%-2.5rem)] -translate-x-1/2 text-balance text-center font-mono text-[10px] uppercase leading-relaxed tracking-[0.14em] text-subtle sm:w-auto sm:whitespace-nowrap"
         >
           {t.hint}
-        </motion.div>
+        </m.div>
         <NodeMarkers markers={markers} />
         <IntroOverlay intro={intro} />
         <FilmTranscript />
@@ -1184,18 +1287,18 @@ export function HeroFilm() {
         <Finale progress={film} />
 
         {/* Indication de défilement : seulement une fois la scène prête (avant, le défilement est bloqué). */}
-        <motion.div
+        <m.div
           style={{ opacity: hint }}
           className={`pointer-events-none absolute inset-x-0 bottom-20 flex flex-col items-center gap-1 px-6 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-muted ${ready ? "" : "invisible"}`}
         >
           {autoplay ? t.autoplay : t.scroll}
           <ChevronDown aria-hidden className="size-4 animate-bounce" />
-        </motion.div>
+        </m.div>
 
-        <Chapters progress={film} intro={intro} section={ref} />
+        <Chapters progress={film} intro={intro} section={ref} seek={seek} />
         <AutoplayButton show={ready && !autoplay && !atEnd && !inIntro && idle} label={t.resume} short={t.resumeShort} onClick={resume} />
         <div className="absolute inset-x-0 bottom-0 h-0.5 bg-line md:hidden">
-          <motion.div style={{ scaleX: bar }} className="h-full origin-left bg-fg" />
+          <m.div style={{ scaleX: bar }} className="h-full origin-left bg-fg" />
         </div>
       </div>
     </section>

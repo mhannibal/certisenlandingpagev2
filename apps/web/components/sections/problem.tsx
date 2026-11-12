@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { Cpu, Disc3, Network, Radar } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Reveal } from "@/components/ui/blur-text";
@@ -27,7 +28,7 @@ function BrakingTimeline() {
       <div className="flex h-7 items-center justify-between gap-3">
         <span className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.12em] text-subtle lg:text-[11px] lg:tracking-[0.14em]">{t.label}</span>
         <AnimatePresence mode="wait" initial={false}>
-          <motion.span
+          <m.span
             key={late ? "late" : "ok"}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -37,7 +38,7 @@ function BrakingTimeline() {
             }`}
           >
             {late ? t.late : t.ok}
-          </motion.span>
+          </m.span>
         </AnimatePresence>
       </div>
 
@@ -60,14 +61,14 @@ function BrakingTimeline() {
         <span className="absolute top-5 left-[78%] -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-widest text-fg">
           {t.deadline}
         </span>
-        <motion.div
+        <m.div
           key={late ? "l" : "o"}
           className={`absolute inset-y-0 left-0 ${late ? "hatch" : "bg-fg"}`}
           initial={{ width: "0%" }}
           animate={{ width: late ? "100%" : "66%" }}
           transition={{ duration: late ? 3 : 2, ease }}
         />
-        <motion.span
+        <m.span
           key={late ? "dl" : "do"}
           className={`absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full ${
             late ? "border-2 border-fg bg-ink" : "bg-fg"
@@ -90,7 +91,7 @@ function BrakingTimeline() {
 export function Problem() {
   const t = useDict().problem;
   return (
-    <section id="probleme" className="relative py-20 sm:py-28 lg:py-36">
+    <section id="probleme" className="relative py-14 sm:py-24 md:py-28 lg:py-36">
       <Container>
         <SectionHeading index={sectionIndex("problem")} eyebrow={t.eyebrow} title={t.title} accent={t.accent} description={t.description} />
 

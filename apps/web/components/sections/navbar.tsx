@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { AnimatePresence, useMotionValueEvent, useScroll } from "motion/react";
+import * as m from "motion/react-m";
 import { ArrowUpRight, Check, ChevronDown, Globe } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Logo } from "@/components/logo";
@@ -78,7 +79,7 @@ function LanguageMenu() {
       }}
     >
       {/* Surface qui s'étire depuis le bouton jusqu'au panneau. */}
-      <motion.div
+      <m.div
         initial={false}
         animate={open ? { width: LANG_PANEL_W, height: "auto" } : { width: btnW || "100%", height: 36 }}
         transition={{ type: "spring", stiffness: 420, damping: 36, mass: 0.8 }}
@@ -89,7 +90,7 @@ function LanguageMenu() {
         }`}
       >
         <div className="flex h-9 items-center pl-4">
-          <motion.span
+          <m.span
             aria-hidden
             initial={false}
             animate={open ? { opacity: 1, x: 0 } : { opacity: 0, x: 6 }}
@@ -97,11 +98,11 @@ function LanguageMenu() {
             className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.16em] text-subtle"
           >
             {dict.nav.language}
-          </motion.span>
+          </m.span>
         </div>
         <ul ref={list} id={listId} aria-label={dict.nav.language} inert={!open} onKeyDown={onListKey} className="p-1 pt-0.5">
           {LOCALES.map((l, i) => (
-            <motion.li
+            <m.li
               key={l}
               initial={false}
               animate={open ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: -6, filter: "blur(4px)" }}
@@ -129,14 +130,13 @@ function LanguageMenu() {
                 </span>
                 {l === locale ? <Check aria-hidden className="size-4" /> : null}
               </a>
-            </motion.li>
+            </m.li>
           ))}
         </ul>
-      </motion.div>
+      </m.div>
       <button
         ref={btn}
         type="button"
-        aria-label={`${dict.nav.language} : ${LOCALE_META[locale].label}`}
         aria-expanded={open}
         aria-controls={listId}
         onClick={(e) => {
@@ -147,12 +147,18 @@ function LanguageMenu() {
             requestAnimationFrame(() => list.current?.querySelector<HTMLAnchorElement>("[aria-current]")?.focus());
           }
         }}
+        // Fermé : fond plein (celui du panneau des langues), le texte de la page ne transparaît plus derrière.
         className={`relative z-50 inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm text-muted transition-colors duration-300 hover:text-fg ${
-          open ? "border-transparent" : "border-line-2 hover:border-subtle"
+          // Ouvert : fond transparent, sinon le bouton cacherait le bord du panneau qui s'étire.
+          open ? "border-transparent bg-transparent" : "border-line-2 bg-card hover:border-subtle"
         }`}
       >
         <Globe aria-hidden className="size-4" strokeWidth={1.6} />
         <span className="text-fg">{LOCALE_META[locale].short}</span>
+        {/* Nom complet pour les lecteurs d'écran, après le texte visible (« EN, Langue : English »). */}
+        <span className="sr-only">
+          , {dict.nav.language} : {LOCALE_META[locale].label}
+        </span>
         <ChevronDown aria-hidden className={`size-3.5 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
       </button>
     </div>
@@ -166,7 +172,7 @@ function LanguageMenu() {
 function MenuButton({ open, label, onClick }: { open: boolean; label: string; onClick: () => void }) {
   const [taps, setTaps] = useState(0);
   return (
-    <motion.button
+    <m.button
       type="button"
       aria-label={label}
       aria-expanded={open}
@@ -177,11 +183,11 @@ function MenuButton({ open, label, onClick }: { open: boolean; label: string; on
       whileTap={{ scale: 0.86 }}
       transition={{ type: "spring", stiffness: 500, damping: 22 }}
       className={`relative grid size-10 cursor-pointer place-items-center rounded-full border transition-colors duration-300 lg:hidden ${
-        open ? "border-fg bg-fg text-ink" : "border-line-2 text-fg hover:border-subtle"
+        open ? "border-fg bg-fg text-ink" : "border-line-2 bg-card text-fg hover:border-subtle"
       }`}
     >
       {taps ? (
-        <motion.span
+        <m.span
           key={taps}
           aria-hidden
           initial={{ scale: 1, opacity: 0.55 }}
@@ -192,7 +198,7 @@ function MenuButton({ open, label, onClick }: { open: boolean; label: string; on
       ) : null}
       <span aria-hidden className="relative block h-3.5 w-[18px]">
         {[-1, 0, 1].map((k) => (
-          <motion.span
+          <m.span
             key={k}
             className="absolute inset-x-0 top-1/2 -mt-[0.75px] h-[1.5px] rounded-full bg-current"
             initial={false}
@@ -211,7 +217,7 @@ function MenuButton({ open, label, onClick }: { open: boolean; label: string; on
           />
         ))}
       </span>
-    </motion.button>
+    </m.button>
   );
 }
 
@@ -247,7 +253,7 @@ export function Navbar() {
       >
         {dict.nav.skip}
       </a>
-      <motion.nav
+      <m.nav
         animate={{
           maxWidth: scrolled ? 960 : 1200,
           paddingTop: scrolled ? 8 : 12,
@@ -277,7 +283,7 @@ export function Navbar() {
                 {l.label}
               </a>
               {hover === l.href ? (
-                <motion.span
+                <m.span
                   layoutId="nav-hover"
                   className="absolute inset-0 rounded-full bg-white/[0.07]"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
@@ -305,11 +311,11 @@ export function Navbar() {
           </a>
           <MenuButton open={open} label={open ? dict.nav.closeMenu : dict.nav.openMenu} onClick={() => setOpen((o) => !o)} />
         </div>
-      </motion.nav>
+      </m.nav>
 
       <AnimatePresence>
         {open ? (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: -8, scale: 0.96, filter: "blur(6px)" }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -8, scale: 0.96, filter: "blur(6px)" }}
@@ -317,7 +323,7 @@ export function Navbar() {
             className="card absolute inset-x-4 top-20 origin-top-right rounded-3xl p-3 lg:hidden"
           >
             {[...links, { href: "#contact", label: dict.nav.contact }].map((l, i) => (
-              <motion.a
+              <m.a
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
@@ -327,9 +333,9 @@ export function Navbar() {
                 className="block rounded-2xl px-4 py-3 text-base text-fg hover:bg-white/5"
               >
                 {l.label}
-              </motion.a>
+              </m.a>
             ))}
-          </motion.div>
+          </m.div>
         ) : null}
       </AnimatePresence>
     </header>

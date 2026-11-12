@@ -211,6 +211,8 @@ const en = {
     linkedin: "CertiSen on LinkedIn",
     copyEmail: "Copy email address",
     copied: "Copied!",
+    openMaps: "open in Google Maps",
+    copyAddress: "Copy address",
     address: "655 av. de l'Europe, 38330 Montbonnot-Saint-Martin, France",
     form: {
       name: "Name",
@@ -230,6 +232,14 @@ const en = {
     contactTitle: "Contact",
     rights: "© 2026 CertiSen. All rights reserved.",
     top: "Back to top",
+    share: "Share",
+    shareGroup: "Share CertiSen",
+    shareEmail: "Share the email address",
+    shareSite: "Share the website",
+    shareLinkedin: "Share the LinkedIn page",
+    shareAll: "Copy website, email and LinkedIn",
+    shareText: "CertiSen, Engineering Trust for Software-Defined Vehicles",
+    shareCopied: "Copied!",
   },
   heroFilm: {
     label: "From the factory to the road, certified by CertiSen",
@@ -240,6 +250,7 @@ const en = {
     hint: "Click a point to see what it is",
     showDetails: "Details",
     hideDetails: "Hide details",
+    swipe: "Swipe",
     lead: "CertiSen is the continuous formal verification layer for [[software-defined vehicles]]. We guarantee timing safety and cybersecurity [[after every OTA update]] with mathematical proofs.",
     chapters: ["Assembly", "OTA update", "Certification", "Deployment", "Timing safety", "Deadlines", "Monitoring", "Cybersecurity", "Latency", "On the road"],
     assembly: {

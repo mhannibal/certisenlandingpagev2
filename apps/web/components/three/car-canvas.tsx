@@ -8,6 +8,7 @@ import { Check } from "lucide-react";
 import { NODE_ICON } from "./node-icons";
 import { CarBody } from "./car-body";
 import { Precompile } from "./precompile";
+import { Staged } from "./staged";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { DPR_FLOOR, renderQuality } from "@/lib/render-quality";
 import * as THREE from "three";
@@ -461,6 +462,13 @@ export default function CarCanvas({
   const ref = useRef<HTMLDivElement>(null);
   const anchors = useRef<(HTMLDivElement | null)[]>([]);
   const inView = useInView(ref, { margin: "120px" });
+  // Pendant la construction par étapes, aucune image n'est dessinée (la scène est encore masquée) :
+  // le processeur ne sert qu'à construire. Le dessin reprend une fois les shaders compilés.
+  const [built, setBuilt] = useState(false);
+  const ready = useCallback(() => {
+    setBuilt(true);
+    onReady?.();
+  }, [onReady]);
   const visible = stage >= 1;
   // Qualité selon l'appareil ; résolution abaissée si la fluidité chute.
   const quality = useMemo(renderQuality, []);
@@ -469,19 +477,13 @@ export default function CarCanvas({
   return (
     <div ref={ref} className={className}>
       <Canvas
-        frameloop={inView ? "always" : "never"}
+        frameloop={inView && built ? "always" : "never"}
         dpr={dpr}
         camera={{ position: [6.6, 2.7, 7.4], fov: 35 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
         <color attach="background" args={["#0a0a0a"]} />
         <fog attach="fog" args={["#0a0a0a", FOG_NEAR, FOG_FAR]} />
-        <CameraRig progress={progress} />
-        <CarBody progress={progress} />
-        <CarModel progress={progress} />
-        <NetworkLinks progress={progress} selected={selected} stage={stage} />
-        <Packets progress={progress} />
-        <Projector anchors={anchors} />
         <PerformanceMonitor onDecline={lower} onFallback={lower} flipflops={3} />
         {/* MSAA dans le tampon du composer : arêtes nettes (carrosserie, branches de jantes, fil de fer). */}
         <EffectComposer multisampling={quality.msaa}>
@@ -498,7 +500,15 @@ export default function CarCanvas({
           <ToneMapping mode={8} />
           <Vignette eskil={false} offset={0.2} darkness={0.65} />
         </EffectComposer>
-        <Precompile onReady={onReady} />
+        {/* Scène montée élément par élément, puis shaders compilés une fois tout en place. */}
+        <Staged then={<Precompile onReady={ready} />}>
+          <CameraRig progress={progress} />
+          <CarBody progress={progress} />
+          <CarModel progress={progress} />
+          <NetworkLinks progress={progress} selected={selected} stage={stage} />
+          <Packets progress={progress} />
+          <Projector anchors={anchors} />
+        </Staged>
       </Canvas>
 
       {/* Marqueurs cliquables : DOM ordinaire, positionné par <Projector /> */}

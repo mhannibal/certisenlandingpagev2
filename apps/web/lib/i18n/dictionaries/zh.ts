@@ -209,6 +209,8 @@ const zh: Dictionary = {
     linkedin: "CertiSen 领英主页",
     copyEmail: "复制邮箱地址",
     copied: "已复制",
+    openMaps: "在 Google 地图中打开",
+    copyAddress: "复制地址",
     address: "655 av. de l'Europe, 38330 Montbonnot-Saint-Martin, 法国",
     form: {
       name: "姓名",
@@ -228,6 +230,14 @@ const zh: Dictionary = {
     contactTitle: "联系方式",
     rights: "© 2026 CertiSen. 保留所有权利。",
     top: "返回顶部",
+    share: "分享",
+    shareGroup: "分享 CertiSen",
+    shareEmail: "分享邮箱地址",
+    shareSite: "分享网站",
+    shareLinkedin: "分享 LinkedIn 页面",
+    shareAll: "复制网站、邮箱和 LinkedIn",
+    shareText: "CertiSen：为软件定义汽车构建信任",
+    shareCopied: "已复制",
   },
   heroFilm: {
     label: "从工厂到道路，经 CertiSen 认证",
@@ -238,6 +248,7 @@ const zh: Dictionary = {
     hint: "点击圆点，查看对应部件",
     showDetails: "详情",
     hideDetails: "收起",
+    swipe: "滑动",
     lead: "CertiSen 是面向[[软件定义汽车]]的持续形式化验证层。我们以数学证明保障[[每次 OTA 升级后]]的时间安全与网络安全。",
     chapters: ["装配", "OTA 更新", "认证", "部署", "时间安全", "截止时间", "监控", "网络安全", "延迟", "上路"],
     assembly: {
