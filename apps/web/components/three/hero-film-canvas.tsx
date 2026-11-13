@@ -5,11 +5,23 @@ import { StudioEnvironment, type StudioPanel } from "./studio-environment";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Bloom, EffectComposer, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { useInView, useTransform, type MotionValue } from "motion/react";
-import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { DPR_FLOOR, renderQuality } from "@/lib/render-quality";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+  type RefObject,
+} from "react";
+import { CSS_VIGNETTE, DPR_FLOOR, glOptions, renderQuality } from "@/lib/render-quality";
 import * as THREE from "three";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
-import { LOGO_PATHS } from "@/components/logo";
+import { toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { BRAND, SYMBOL } from "@/lib/logo-paths";
 import { DESIGN } from "@/lib/car-design";
 import { CRITICAL_PATH, LINKS, NODES, OTHER_FLOWS, nodeById } from "@/lib/car-network";
 import {
@@ -28,7 +40,7 @@ import {
   win,
 } from "@/lib/hero-film";
 import { pointAt, smoothstep, type Flow } from "@/lib/network";
-import { CarBody } from "./car-body";
+import { CarBody, carPreparation } from "./car-body";
 import { Precompile } from "./precompile";
 import { Staged } from "./staged";
 
@@ -1933,32 +1945,54 @@ function CertRing({ progress }: { progress: MotionValue<number> }) {
   );
 }
 
-/** Géométries du logo CertiSen en relief (bouclier et couronne extrudés, poussoir, coche en réserve). */
+/**
+ * Logo officiel (lib/logo-paths : 100 unités de haut) ramené à l'échelle de l'ancien logo de la
+ * scène (≈ 28 unités) et centré sur l'origine : les tailles et positions de la scène sont gardées.
+ */
+const LOGO_K = 0.28;
+
+/** Formes d'un tracé du logo (contours et trous). */
+function symbolShapes(d: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg"><path d="${d}" fill="#fff" fill-rule="evenodd"/></svg>`;
+  return new SVGLoader().parse(svg).paths.flatMap((p) => SVGLoader.createShapes(p));
+}
+
+/** Coche verte à plat, centrée comme le symbole. */
+function checkGeometry() {
+  return new THREE.ShapeGeometry(symbolShapes(SYMBOL.check)).translate(-SYMBOL.w / 2, -50, 0).scale(LOGO_K, LOGO_K, 1);
+}
+
+/**
+ * Couche extrudée du logo, centrée en z (épaisseur `depth`, en unités de la scène), avec un léger
+ * chanfrein et des normales lissées sur les courbes (bouclier, cadran) mais vives aux angles.
+ */
+function logoLayer(d: string, depth: number, bevel: number) {
+  const k = LOGO_K;
+  const g = new THREE.ExtrudeGeometry(symbolShapes(d), {
+    depth: depth / k,
+    bevelEnabled: true,
+    bevelThickness: bevel / k,
+    bevelSize: (bevel * 0.8) / k,
+    bevelSegments: 2,
+  });
+  g.translate(-SYMBOL.w / 2, -50, -depth / k / 2).scale(k, k, k);
+  return toCreasedNormals(g, Math.PI / 5);
+}
+
+/**
+ * Emblème en relief, comme une médaille (logo officiel « blanc sur bleu ») : silhouette pleine en
+ * bleu CertiSen, dessin blanc en relief sur les deux faces, coche verte encore au-dessus. Le cadran
+ * est plein : les graduations et la coche ne flottent plus dans le vide.
+ */
 function useLogoGeometry() {
-  return useMemo(() => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="${LOGO_PATHS.crown}" fill="#fff"/><path d="${LOGO_PATHS.shield}" fill="#fff"/></svg>`;
-    const data = new SVGLoader().parse(svg);
-    const shapes = data.paths.flatMap((p) => SVGLoader.createShapes(p));
-    const CX = 16;
-    const CY = 15.3;
-    const body = new THREE.ExtrudeGeometry(shapes, {
-      depth: 2.2,
-      bevelEnabled: true,
-      bevelThickness: 0.5,
-      bevelSize: 0.35,
-      bevelSegments: 3,
-      curveSegments: 32,
-    });
-    body.translate(-CX, -CY, -1.1);
-    body.computeVertexNormals();
-    const pusher = new THREE.CapsuleGeometry(0.9, 2.26, 6, 16);
-    pusher.rotateZ(Math.PI / 4);
-    pusher.translate(25.1 - CX, 6.1 - CY, 0);
-    const pts = [new THREE.Vector2(11.3, 16.9), new THREE.Vector2(14.6, 20.2), new THREE.Vector2(20.8, 13.6)];
-    const check = SVGLoader.pointsToStroke(pts, SVGLoader.getStrokeStyle(2.6, "#000", "round", "round"));
-    check.translate(-CX, -CY, 0);
-    return { body, pusher, check };
-  }, []);
+  return useMemo(
+    () => ({
+      plate: logoLayer(SYMBOL.outline, 2.2, 0.16),
+      body: logoLayer(SYMBOL.body, 2.9, 0.08),
+      check: logoLayer(SYMBOL.check, 3.5, 0.08),
+    }),
+    [],
+  );
 }
 
 /**
@@ -2012,7 +2046,23 @@ function Emblem({ progress }: { progress: MotionValue<number> }) {
         emissiveIntensity: 0.28,
         transparent: true,
       }),
-      check: new THREE.MeshBasicMaterial({ color: "#0a0a0a", transparent: true, side: THREE.DoubleSide }),
+      // Fond de la médaille : bleu CertiSen légèrement métallisé.
+      plate: new THREE.MeshStandardMaterial({
+        color: BRAND.blue,
+        metalness: 0.45,
+        roughness: 0.32,
+        emissive: BRAND.blue,
+        emissiveIntensity: 0.35,
+        transparent: true,
+      }),
+      check: new THREE.MeshStandardMaterial({
+        color: BRAND.green,
+        metalness: 0.2,
+        roughness: 0.35,
+        emissive: BRAND.green,
+        emissiveIntensity: 0.55,
+        transparent: true,
+      }),
       ring: new THREE.MeshBasicMaterial({ color: glow(1.6), transparent: true, toneMapped: false }),
       beam: new THREE.MeshBasicMaterial({
         color: "#ffffff",
@@ -2052,6 +2102,7 @@ function Emblem({ progress }: { progress: MotionValue<number> }) {
     g.scale.setScalar(0.6 + 0.4 * a);
     if (spin.current) spin.current.rotation.y = state.clock.elapsedTime * 0.6 + (1 - a) * 2.4;
     mats.metal.opacity = vis;
+    mats.plate.opacity = vis;
     mats.check.opacity = vis;
     mats.ring.opacity = vis;
     // Scan : l'emblème suit les paquets, faisceau étroit et plan lumineux qui descend.
@@ -2071,10 +2122,10 @@ function Emblem({ progress }: { progress: MotionValue<number> }) {
     <group ref={group} position={[0, Y, 0]} visible={false}>
       <group ref={spin}>
         <group scale={[S, -S, S]}>
-          <mesh geometry={geo.body} material={mats.metal} />
-          <mesh geometry={geo.pusher} material={mats.metal} />
-          <mesh geometry={geo.check} material={mats.check} position={[0, 0, 1.62]} />
-          <mesh geometry={geo.check} material={mats.check} position={[0, 0, -1.62]} />
+          {/* Médaille : fond bleu, relief blanc puis coche verte, visibles des deux côtés. */}
+          <mesh geometry={geo.plate} material={mats.plate} renderOrder={1} />
+          <mesh geometry={geo.body} material={mats.metal} renderOrder={2} />
+          <mesh geometry={geo.check} material={mats.check} renderOrder={3} />
         </group>
         <mesh material={mats.ring}>
           <torusGeometry args={[0.82, 0.012, 8, 128]} />
@@ -2195,19 +2246,12 @@ function jaggedRing(r: number, n: number, seed: number) {
   return new THREE.BufferGeometry().setFromPoints(pts);
 }
 
-/** Logo CertiSen à plat : bouclier et couronne pleins, poussoir, coche en réserve (unités SVG centrées). */
+/** Logo CertiSen à plat : symbole officiel plein et coche verte (unités de la scène, centré). */
 function useFlatLogo() {
   return useMemo(() => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="${LOGO_PATHS.crown}" fill="#fff"/><path d="${LOGO_PATHS.shield}" fill="#fff"/></svg>`;
-    const shapes = new SVGLoader().parse(svg).paths.flatMap((pp) => SVGLoader.createShapes(pp));
-    const fill = new THREE.ShapeGeometry(shapes, 24).translate(-16, -15.3, 0);
-    const style = SVGLoader.getStrokeStyle(1.8, "#fff", "round", "round");
-    const pusher = SVGLoader.pointsToStroke([new THREE.Vector2(24.3, 6.9), new THREE.Vector2(25.9, 5.3)], style).translate(-16, -15.3, 0);
-    const check = SVGLoader.pointsToStroke(
-      [new THREE.Vector2(11.3, 16.9), new THREE.Vector2(14.6, 20.2), new THREE.Vector2(20.8, 13.6)],
-      SVGLoader.getStrokeStyle(2.6, "#000", "round", "round"),
-    ).translate(-16, -15.3, 0.01);
-    return { fill, pusher, check };
+    const fill = new THREE.ShapeGeometry(symbolShapes(SYMBOL.body)).translate(-SYMBOL.w / 2, -50, 0).scale(LOGO_K, LOGO_K, 1);
+    const check = checkGeometry().translate(0, 0, 0.01);
+    return { fill, check };
   }, []);
 }
 
@@ -2216,7 +2260,7 @@ function logoMaterials() {
   const base = { transparent: true, opacity: 0, side: THREE.DoubleSide, depthTest: false, depthWrite: false } as const;
   return {
     fill: new THREE.MeshBasicMaterial({ ...base, color: glow(1.8), toneMapped: false }),
-    check: new THREE.MeshBasicMaterial({ ...base, color: "#0a0a0a" }),
+    check: new THREE.MeshBasicMaterial({ ...base, color: BRAND.green, toneMapped: false }),
   };
 }
 
@@ -2498,7 +2542,6 @@ function CyberAttacks({ progress }: { progress: MotionValue<number> }) {
         <group key={i} ref={(el) => void (logos.current[i] = el)} visible={false}>
           <group scale={[1, -1, 1]}>
             <mesh geometry={logo.fill} material={m.fill} renderOrder={15} />
-            <mesh geometry={logo.pusher} material={m.fill} renderOrder={15} />
             <mesh geometry={logo.check} material={m.check} renderOrder={16} />
           </group>
         </group>
@@ -2676,33 +2719,43 @@ function NodeProjector({ progress, markers }: { progress: MotionValue<number>; m
 /* Voiture                                                             */
 /* ------------------------------------------------------------------ */
 
-function Vehicle({ progress }: { progress: MotionValue<number> }) {
-  const group = useRef<THREE.Group>(null);
-  // Assemblage : le démontage de la section « En action » joué à l'envers (0,2 → 0).
+/** Carrosserie du film : assemblage (le démontage de « En action » joué à l'envers), roues qui tournent. */
+function Car({ progress }: { progress: MotionValue<number> }) {
   const assembly = useTransform(progress, [FILM.assemble[0], FILM.assemble[1]], [0.2, 0], { clamp: true });
   const spin = useTransform(progress, (p) => carX(p) / DESIGN.wheel.R);
+  return <CarBody progress={assembly} spin={spin} lights={false} />;
+}
+
+/** Repère qui suit la voiture le long de la route. */
+function OnCar({ progress, children }: { progress: MotionValue<number>; children: ReactNode }) {
+  const group = useRef<THREE.Group>(null);
   useFrame(() => {
     if (group.current) group.current.position.x = carX(progress.get());
   });
-  return (
-    <group ref={group}>
-      <CarBody progress={assembly} spin={spin} lights={false} />
-      <Headlights progress={progress} />
-      <OtaCloud progress={progress} />
-      <OtaWaves progress={progress} />
-      <OtaStream progress={progress} />
-      <Packages progress={progress} />
-      <NetworkXray progress={progress} />
-      <Packets progress={progress} />
-      <RadarCone progress={progress} />
-      <CertRing progress={progress} />
-      <Emblem progress={progress} />
-      <SwitchGauges progress={progress} />
-      <MonitorPulse progress={progress} />
-      <CyberAttacks progress={progress} />
-    </group>
-  );
+  return <group ref={group}>{children}</group>;
 }
+
+/**
+ * La voiture et tout ce qui roule avec elle. Chaque élément a son propre repère qui suit la
+ * voiture : la scène les monte un par un (Staged) au lieu d'un seul bloc (≈ 0,9 s de blocage
+ * mesuré sur téléphone simulé). Rendu identique.
+ */
+const CAR_PARTS: ComponentType<{ progress: MotionValue<number> }>[] = [
+  Car,
+  Headlights,
+  OtaCloud,
+  OtaWaves,
+  OtaStream,
+  Packages,
+  NetworkXray,
+  Packets,
+  RadarCone,
+  CertRing,
+  Emblem,
+  SwitchGauges,
+  MonitorPulse,
+  CyberAttacks,
+];
 
 /** Projecteurs du plafond de l'atelier : baie de la voiture, robots et ingénieurs, poste de contrôle. */
 const WORK_LIGHTS: { pos: V3; aim: V3; power: number }[] = [
@@ -2841,16 +2894,19 @@ export default function HeroFilmCanvas({
         frameloop={inView && built ? "always" : "never"}
         dpr={dpr}
         camera={{ position: SHOTS[0]!.pos, fov: FOV, near: 0.1, far: 220 }}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        gl={glOptions(quality)}
       >
         <color attach="background" args={[ink]} />
         <fog attach="fog" args={[ink, 22, 85]} />
         <PerformanceMonitor onDecline={lower} onFallback={lower} flipflops={3} />
-        <EffectComposer multisampling={quality.msaa}>
-          <Bloom mipmapBlur intensity={0.55} luminanceThreshold={0.95} luminanceSmoothing={0.2} />
-          <ToneMapping mode={8} />
-          <Vignette eskil={false} offset={0.2} darkness={0.6} />
-        </EffectComposer>
+        {/* Post-traitement sur ordinateur seulement (scène allégée sur téléphone). */}
+        {quality.post ? (
+          <EffectComposer multisampling={quality.msaa}>
+            <Bloom mipmapBlur intensity={0.55} luminanceThreshold={0.95} luminanceSmoothing={0.2} />
+            <ToneMapping mode={8} />
+            <Vignette eskil={false} offset={0.2} darkness={0.6} />
+          </EffectComposer>
+        ) : null}
         <IntroCtx.Provider value={intro}>
           {/* Scène montée élément par élément (page réactive pendant la construction), puis
               shaders compilés une fois tout en place. Ordre inchangé : la caméra est réglée
@@ -2866,12 +2922,19 @@ export default function HeroFilmCanvas({
             <Road progress={progress} />
             <Barrier progress={progress} />
             <LatencyTrail progress={progress} />
-            <Vehicle progress={progress} />
+            {/* Carrosserie et roues calculées pièce par pièce, puis la voiture et ses calques. */}
+            {carPreparation()}
+            {CAR_PARTS.map((Part, i) => (
+              <OnCar key={i} progress={progress}>
+                <Part progress={progress} />
+              </OnCar>
+            ))}
             <CameraRig progress={progress} />
             <NodeProjector progress={progress} markers={markers} />
           </Staged>
         </IntroCtx.Provider>
       </Canvas>
+      {quality.post ? null : <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: CSS_VIGNETTE }} />}
     </div>
   );
 }

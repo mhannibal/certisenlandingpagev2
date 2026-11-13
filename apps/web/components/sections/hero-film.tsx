@@ -390,7 +390,7 @@ function CertifiedPanel({ progress }: { progress: MotionValue<number> }) {
   return (
     <m.div style={{ scale, rotate, opacity }} className="card-inset flex items-center gap-4 rounded-lg p-4">
       <span className="grid size-12 shrink-0 place-items-center rounded-full bg-fg text-ink">
-        <LogoMark size={26} animate={false} cutout="var(--color-fg)" />
+        <LogoMark size={26} animate={false} tone="light" />
       </span>
       <div>
         <p className="font-medium text-fg">{t.badge}</p>

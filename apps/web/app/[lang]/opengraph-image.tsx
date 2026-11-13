@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { hasLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { LOGO_PATHS } from "@/lib/logo-paths";
+import { BRAND, SYMBOL, WORDMARK } from "@/lib/logo-paths";
 
-/** Image de partage (réseaux sociaux, messageries) : logo, accroche et description, en noir et blanc. */
+/** Image de partage (réseaux sociaux, messageries) : logo officiel, accroche et description. */
 export const alt = "CertiSen";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -48,14 +48,15 @@ export default async function Image({ params }: { params: Promise<{ lang: string
           ...(zh ? { fontFamily: ZH_FONT } : {}),
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <svg width="64" height="64" viewBox="0 0 32 32" fill="none">
-            <path d={LOGO_PATHS.crown} fill="#fafafa" />
-            <path d={LOGO_PATHS.pusher} stroke="#fafafa" strokeWidth="1.8" strokeLinecap="round" />
-            <path d={LOGO_PATHS.shield} fill="#fafafa" />
-            <path d={LOGO_PATHS.check} stroke="#0a0a0a" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Logo officiel : symbole (blanc, coche verte) et mot « CertiSen ». */}
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <svg width={(76 * SYMBOL.w) / 100} height="76" viewBox={`0 0 ${SYMBOL.w} 100`}>
+            <path d={SYMBOL.body} fill="#fafafa" fillRule="evenodd" />
+            <path d={SYMBOL.check} fill={BRAND.green} fillRule="evenodd" />
           </svg>
-          <div style={{ fontSize: 42, fontWeight: 600, letterSpacing: "-0.02em" }}>CertiSen</div>
+          <svg width={(40 * WORDMARK.w) / 100} height="40" viewBox={`0 0 ${WORDMARK.w} 100`}>
+            <path d={WORDMARK.d} fill="#fafafa" fillRule="evenodd" />
+          </svg>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <div style={{ fontSize: 68, fontWeight: zh ? 500 : 600, lineHeight: zh ? 1.2 : 1.04, letterSpacing: zh ? "0" : "-0.035em" }}>

@@ -129,7 +129,7 @@ function CoreCard3D({
             style={{ background: glare }}
           />
           <div style={layer(45)}>
-            <LogoMark size={44} className="mx-auto size-8 text-ink sm:size-9 lg:size-11 drop-shadow-[0_8px_10px_rgb(0_0_0/0.25)]" animate={false} cutout="#fafafa" />
+            <LogoMark size={44} tone="light" className="mx-auto size-8 sm:size-9 lg:size-11 drop-shadow-[0_8px_10px_rgb(0_0_0/0.25)]" animate={false} />
           </div>
           <div style={layer(28)}>
             <p className="mt-2 text-[12px] font-semibold tracking-tight sm:mt-3 sm:text-base lg:text-lg">CertiSen Core</p>

@@ -117,7 +117,7 @@ export default function SocialButton({
     <div ref={root} onBlur={onBlur} className={`relative ${className ?? ""}`} style={{ width: CLOSED_W, height: H }}>
       <m.div
         animate={{ width: isExpanded ? "auto" : `${CLOSED_W}px`, height: `${H}px` }}
-        className="absolute left-1/2 top-0 z-10 flex -translate-x-1/2 items-center overflow-hidden rounded-full border border-line-2 bg-card transition-colors duration-300 hover:border-subtle sm:left-0 sm:translate-x-0"
+        className="absolute left-0 top-0 z-10 flex items-center overflow-hidden rounded-full border border-line-2 bg-card transition-colors duration-300 hover:border-subtle"
         initial={false}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
       >

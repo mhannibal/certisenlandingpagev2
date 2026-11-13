@@ -1,43 +1,39 @@
 import * as THREE from "three";
 import type { BodyDecal } from "@/lib/car-body";
-import { LOGO_PATHS } from "@/lib/logo-paths";
+import { BRAND, SYMBOL_BLUE, WORDMARK } from "@/lib/logo-paths";
 
 /**
  * Marquages CertiSen de la voiture : emblème bleu sur le capot et plaques « CertiSen ».
  * Textures dessinées une seule fois (canvas), partagées par les deux voitures du site.
  */
 
-/** Bleu de la marque (certisen.com), demandé par Lucas pour l'emblème du capot. */
-const BRAND_BLUE = "#102d6e";
 
 let badgeTexture: THREE.CanvasTexture | null = null;
 let plateTexture: THREE.CanvasTexture | null = null;
 
-/** Logo CertiSen (bouclier, couronne, poussoir) en bleu ; la coche est évidée (on voit la peinture). */
+/**
+ * Logo officiel (version bleue pour fond clair) sur le capot : dessin bleu CertiSen, coche verte ;
+ * les parties blanches du logo restent transparentes (on voit la peinture argent).
+ */
 function badge() {
   if (badgeTexture) return badgeTexture;
   const c = document.createElement("canvas");
   c.width = c.height = 512;
   const g = c.getContext("2d")!;
-  g.scale(512 / 32, 512 / 32);
-  g.fillStyle = BRAND_BLUE;
-  g.strokeStyle = BRAND_BLUE;
-  g.lineCap = "round";
-  g.lineJoin = "round";
-  g.fill(new Path2D(LOGO_PATHS.crown));
-  g.lineWidth = 1.8;
-  g.stroke(new Path2D(LOGO_PATHS.pusher));
-  g.fill(new Path2D(LOGO_PATHS.shield));
-  g.globalCompositeOperation = "destination-out";
-  g.lineWidth = 2.6;
-  g.stroke(new Path2D(LOGO_PATHS.check));
+  const k = (512 * 0.94) / 100;
+  g.translate((512 - SYMBOL_BLUE.w * k) / 2, 512 * 0.03);
+  g.scale(k, k);
+  g.fillStyle = BRAND.blue;
+  g.fill(new Path2D(SYMBOL_BLUE.body), "evenodd");
+  g.fillStyle = BRAND.green;
+  g.fill(new Path2D(SYMBOL_BLUE.check), "evenodd");
   badgeTexture = new THREE.CanvasTexture(c);
   badgeTexture.colorSpace = THREE.SRGBColorSpace;
   badgeTexture.anisotropy = 8;
   return badgeTexture;
 }
 
-/** Plaque au format européen (520 × 110 mm) : fond clair, liseré sombre, « CertiSen » au centre. */
+/** Plaque au format européen (520 × 110 mm) : fond clair, liseré sombre, mot « CertiSen » du logo au centre. */
 function plate() {
   if (plateTexture) return plateTexture;
   const c = document.createElement("canvas");
@@ -51,13 +47,13 @@ function plate() {
   g.lineWidth = 8;
   g.strokeStyle = "#1a1a1a";
   g.stroke();
-  // Police du site (Geist, chargée par next/font), sinon police système.
-  const family = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+  // « CertiSen » dans la police du logo officiel (tracé du mot), centré.
+  const h = 104;
+  const k = h / 100;
+  g.translate((1040 - WORDMARK.w * k) / 2, (220 - h) / 2);
+  g.scale(k, k);
   g.fillStyle = "#111111";
-  g.textAlign = "center";
-  g.textBaseline = "middle";
-  g.font = `600 136px ${family}`;
-  g.fillText("CertiSen", 520, 116);
+  g.fill(new Path2D(WORDMARK.d), "evenodd");
   plateTexture = new THREE.CanvasTexture(c);
   plateTexture.colorSpace = THREE.SRGBColorSpace;
   plateTexture.anisotropy = 8;

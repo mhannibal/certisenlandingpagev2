@@ -202,7 +202,7 @@ function EcosystemVisual() {
         ))}
       </div>
       <span className="grid size-14 place-items-center rounded-xl bg-fg text-ink md:size-10 md:rounded-lg lg:size-14 lg:rounded-xl">
-        <LogoMark size={30} animate={false} cutout="#fafafa" />
+        <LogoMark size={30} animate={false} tone="light" />
       </span>
     </div>
   );

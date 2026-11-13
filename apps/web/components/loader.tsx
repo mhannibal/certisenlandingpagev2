@@ -13,7 +13,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { LOGO_PATHS } from "@/components/logo";
+import { BRAND, SYMBOL } from "@/lib/logo-paths";
 import { useDict } from "@/lib/i18n/provider";
 import { hasWebGL } from "@/components/three/webgl-guard";
 
@@ -62,18 +62,19 @@ function LoadingBadge({ progress, step, label }: { progress: number; step: strin
       transition={{ duration: 0.5, ease: EASE }}
       className="pointer-events-none fixed inset-x-0 bottom-8 z-[60] mx-auto flex w-fit items-center gap-3 rounded-full border border-line-2 bg-card/85 py-2 pl-2.5 pr-4 shadow-[0_12px_40px_-12px_rgb(0_0_0/0.8)] backdrop-blur-xl"
     >
-      <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden className="shrink-0 text-fg">
-        <path d={LOGO_PATHS.crown} fill="currentColor" />
-        <m.path
-          d={LOGO_PATHS.shield}
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-          initial={{ pathLength: 0.05 }}
-          animate={{ pathLength: [0.05, 1, 1, 0.05] }}
-          transition={{ duration: 2.4, times: [0, 0.45, 0.7, 1], repeat: Infinity, ease: [0.65, 0, 0.35, 1] }}
-        />
-      </svg>
+      {/* Logo officiel qui « respire » pendant le chargement. */}
+      <m.svg
+        width={(22 * SYMBOL.w) / 100}
+        height="22"
+        viewBox={`0 0 ${SYMBOL.w} 100`}
+        aria-hidden
+        className="shrink-0 text-fg"
+        animate={{ opacity: [1, 0.45, 1] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <path d={SYMBOL.body} fill="currentColor" fillRule="evenodd" />
+        <path d={SYMBOL.check} fill={BRAND.green} fillRule="evenodd" />
+      </m.svg>
       <div className="flex w-36 flex-col gap-1.5 sm:w-44">
         <div className="flex items-baseline justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-subtle">
           <span role="status" aria-live="polite" className="truncate">

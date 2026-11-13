@@ -19,6 +19,17 @@ export const CALIPER_RIGHT = Math.PI * 0.2;
  * Quatre roues pleines (pneu, jante bi-ton, disque, étrier) qui tournent en phase
  * avec les roues en fil de fer, puis s'effacent pendant le démontage.
  */
+/** Géométries des roues déjà calculées (≈ 0,14 s sur téléphone simulé), partagées par les scènes. */
+const WHEELS = new WeakMap<WheelSpec, ReturnType<typeof wheelGeometries>>();
+export function cachedWheels(spec: WheelSpec) {
+  let g = WHEELS.get(spec);
+  if (!g) {
+    g = wheelGeometries(spec);
+    WHEELS.set(spec, g);
+  }
+  return g;
+}
+
 export function CarWheels({
   progress,
   spec,
@@ -38,7 +49,7 @@ export function CarWheels({
   /** Avancement du défilement où les roues pleines s'effacent. */
   fadeRange: [number, number];
 }) {
-  const geo = useMemo(() => wheelGeometries(spec), [spec]);
+  const geo = useMemo(() => cachedWheels(spec), [spec]);
   const calipers = useMemo(() => [geo.caliper(CALIPER_LEFT), geo.caliper(CALIPER_RIGHT)] as const, [geo]);
   const mats = useMemo(() => wheelMaterials(), []);
   const root = useRef<THREE.Group>(null);

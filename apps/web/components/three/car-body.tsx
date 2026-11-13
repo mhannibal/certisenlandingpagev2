@@ -5,11 +5,12 @@ import { useFrame } from "@react-three/fiber";
 import type { MotionValue } from "motion/react";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
-import { buildBody, type MaterialKey } from "@/lib/car-body";
+import { BODY_PIECE_COUNT, bodyPiece, buildBody, type MaterialKey } from "@/lib/car-body";
+import { renderQuality } from "@/lib/render-quality";
 import { DESIGN } from "@/lib/car-design";
 import { smoothstep } from "@/lib/network";
 import { bodyMaterials, contactShadowTexture, fade } from "./car-materials";
-import { CarWheels } from "./car-wheels";
+import { CarWheels, cachedWheels } from "./car-wheels";
 import { decalMaterial } from "./car-branding";
 
 /** Durée (en avancement de défilement) du mouvement d'une pièce, puis de son effacement. */
@@ -107,6 +108,25 @@ function StageGlow({ progress }: { progress: MotionValue<number> }) {
   );
 }
 
+/** Calcule une pièce de la carrosserie (ou les roues) sans rien afficher : voir carPreparation. */
+function Prepare({ run }: { run: () => unknown }) {
+  useMemo(run, [run]);
+  return null;
+}
+
+/**
+ * Étapes de préparation de la voiture, à placer avant <CarBody /> dans un <Staged> : chaque pièce
+ * de la carrosserie puis les roues sont calculées dans leur propre tâche (au lieu d'un bloc
+ * d'≈ 0,75 s sur téléphone simulé). Rendu identique.
+ */
+export function carPreparation() {
+  const detail = renderQuality().detail;
+  return [
+    ...Array.from({ length: BODY_PIECE_COUNT }, (_, k) => <Prepare key={`piece-${k}`} run={() => bodyPiece(k, detail)} />),
+    <Prepare key="wheels" run={() => cachedWheels(DESIGN.wheel)} />,
+  ];
+}
+
 /**
  * Carrosserie pleine : visible entière en arrivant sur la section, puis démontée
  * pièce par pièce au défilement (toit, capot, flancs, avant/arrière, roues) pour
@@ -123,7 +143,8 @@ export function CarBody({
   /** Studio d'éclairage intégré (désactivé quand la scène fournit le sien). */
   lights?: boolean;
 }) {
-  const pieces = useMemo(() => buildBody(), []);
+  // Finesse selon l'appareil (moins de facettes sur téléphone) ; calcul partagé entre les scènes.
+  const pieces = useMemo(() => buildBody(renderQuality().detail), []);
   // Un jeu de matériaux par pièce : chacune s'efface indépendamment.
   const mats = useMemo(() => pieces.map(() => bodyMaterials()), [pieces]);
   // Marquages (emblème du capot, plaques) : un matériau par marquage, effacé avec sa pièce.

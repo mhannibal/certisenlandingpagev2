@@ -6,11 +6,11 @@ import { Bloom, EffectComposer, ToneMapping, Vignette } from "@react-three/postp
 import { useInView, type MotionValue } from "motion/react";
 import { Check } from "lucide-react";
 import { NODE_ICON } from "./node-icons";
-import { CarBody } from "./car-body";
+import { CarBody, carPreparation } from "./car-body";
 import { Precompile } from "./precompile";
 import { Staged } from "./staged";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { DPR_FLOOR, renderQuality } from "@/lib/render-quality";
+import { CSS_VIGNETTE, DPR_FLOOR, glOptions, renderQuality } from "@/lib/render-quality";
 import * as THREE from "three";
 import { buildCar, type V3 } from "@/lib/car";
 import { DESIGN } from "@/lib/car-design";
@@ -480,29 +480,36 @@ export default function CarCanvas({
         frameloop={inView && built ? "always" : "never"}
         dpr={dpr}
         camera={{ position: [6.6, 2.7, 7.4], fov: 35 }}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        gl={glOptions(quality)}
       >
         <color attach="background" args={["#0a0a0a"]} />
         <fog attach="fog" args={["#0a0a0a", FOG_NEAR, FOG_FAR]} />
         <PerformanceMonitor onDecline={lower} onFallback={lower} flipflops={3} />
-        {/* MSAA dans le tampon du composer : arêtes nettes (carrosserie, branches de jantes, fil de fer). */}
-        <EffectComposer multisampling={quality.msaa}>
-          {/* Seuil haut : seules les optiques rayonnent, jamais les reflets du vernis. */}
-          <Bloom
-            mipmapBlur
-            intensity={0.5}
-            luminanceThreshold={0.95}
-            luminanceSmoothing={0.2}
-          />
-          {/* Courbe de tons « PBR Neutral » (valeur 8 à l'exécution dans postprocessing 6.39 ;
-              l'enum des types est décalé d'un cran) : couleurs de base intactes, reflets compressés
-              au lieu d'être écrêtés. Le composer désactive la courbe de tons du rendu WebGL. */}
-          <ToneMapping mode={8} />
-          <Vignette eskil={false} offset={0.2} darkness={0.65} />
-        </EffectComposer>
+        {/* Post-traitement sur ordinateur seulement (scène allégée sur téléphone). */}
+        {quality.post ? (
+          <>
+          {/* MSAA dans le tampon du composer : arêtes nettes (carrosserie, branches de jantes, fil de fer). */}
+          <EffectComposer multisampling={quality.msaa}>
+            {/* Seuil haut : seules les optiques rayonnent, jamais les reflets du vernis. */}
+            <Bloom
+              mipmapBlur
+              intensity={0.5}
+              luminanceThreshold={0.95}
+              luminanceSmoothing={0.2}
+            />
+            {/* Courbe de tons « PBR Neutral » (valeur 8 à l'exécution dans postprocessing 6.39 ;
+                l'enum des types est décalé d'un cran) : couleurs de base intactes, reflets compressés
+                au lieu d'être écrêtés. Le composer désactive la courbe de tons du rendu WebGL. */}
+            <ToneMapping mode={8} />
+            <Vignette eskil={false} offset={0.2} darkness={0.65} />
+          </EffectComposer>
+          </>
+        ) : null}
         {/* Scène montée élément par élément, puis shaders compilés une fois tout en place. */}
         <Staged then={<Precompile onReady={ready} />}>
           <CameraRig progress={progress} />
+          {/* Carrosserie et roues (déjà prêtes si le film les a calculées), pièce par pièce. */}
+          {carPreparation()}
           <CarBody progress={progress} />
           <CarModel progress={progress} />
           <NetworkLinks progress={progress} selected={selected} stage={stage} />
@@ -510,6 +517,7 @@ export default function CarCanvas({
           <Projector anchors={anchors} />
         </Staged>
       </Canvas>
+      {quality.post ? null : <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: CSS_VIGNETTE }} />}
 
       {/* Marqueurs cliquables : DOM ordinaire, positionné par <Projector /> */}
       <div

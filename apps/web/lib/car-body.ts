@@ -20,6 +20,7 @@ import {
   orient,
   surfacePatch,
   surfaceStrip,
+  withDetail,
 } from "./car-shape-core";
 
 export const SURFACE = new CarSurface(DESIGN.stations);
@@ -803,6 +804,37 @@ function endPiece(front: boolean): BodyPiece {
 }
 
 /** Pièces de carrosserie, dans l'ordre du démontage. */
-export function buildBody(): BodyPiece[] {
-  return [roofPiece(), hoodPiece(), sidePiece(1), sidePiece(-1), endPiece(true), endPiece(false)];
+/** Les six pièces de la carrosserie, dans l'ordre. */
+const PIECES: (() => BodyPiece)[] = [
+  roofPiece,
+  hoodPiece,
+  () => sidePiece(1),
+  () => sidePiece(-1),
+  () => endPiece(true),
+  () => endPiece(false),
+];
+export const BODY_PIECE_COUNT = PIECES.length;
+
+/** Pièces déjà calculées, par finesse : le film et « En action » partagent les mêmes. */
+const BUILT = new Map<string, BodyPiece>();
+
+/**
+ * Pièce n° `k` de la carrosserie. `detail` < 1 : moins de facettes (téléphone, voir
+ * render-quality). Calculée une seule fois par finesse (≈ 0,85 s pour toute la carrosserie sur
+ * téléphone simulé) : les géométries ne sont jamais modifiées après coup, elles servent aux
+ * deux scènes. Les scènes la préparent pièce par pièce, une par tâche (pas de long blocage).
+ */
+export function bodyPiece(k: number, detail = 1): BodyPiece {
+  const key = `${detail}:${k}`;
+  let piece = BUILT.get(key);
+  if (!piece) {
+    piece = withDetail(detail, PIECES[k]!);
+    BUILT.set(key, piece);
+  }
+  return piece;
+}
+
+/** Toute la carrosserie (pièces déjà préparées réutilisées). */
+export function buildBody(detail = 1): BodyPiece[] {
+  return PIECES.map((_, k) => bodyPiece(k, detail));
 }

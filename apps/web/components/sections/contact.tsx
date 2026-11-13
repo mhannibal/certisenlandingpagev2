@@ -586,7 +586,6 @@ function FooterShare() {
   };
   return (
     <SocialButton
-      className="mx-auto sm:mx-0"
       label={t.share}
       groupLabel={t.shareGroup}
       copiedLabel={t.shareCopied}
@@ -639,16 +638,16 @@ export function Footer() {
 
         {/* Éléments d'origine du pied de page, au centre : financeurs, adresse, contact */}
         <m.div style={{ y: infoY, opacity: infoOpacity }} className="relative z-10 flex flex-1 flex-col justify-center tall:pt-16">
-        {/* Téléphone : bloc centré et resserré, adresse et contact côte à côte. */}
-        <div className="mx-auto grid w-full max-w-[22rem] grid-cols-2 gap-x-6 gap-y-6 px-5 py-8 text-center sm:w-fit sm:max-w-[1200px] sm:gap-x-24 sm:gap-y-10 sm:px-6 sm:py-14 sm:text-left lg:grid-cols-[auto_auto_auto]">
+        {/* Téléphone : tout aligné à gauche (Lucas, 13/11/2026), adresse et contact côte à côte. */}
+        <div className="mx-auto grid w-full grid-cols-2 gap-x-6 gap-y-6 px-5 py-8 text-left sm:w-fit sm:max-w-[1200px] sm:gap-x-24 sm:gap-y-10 sm:px-6 sm:py-14 lg:grid-cols-[auto_auto_auto]">
           <div className="col-span-2 sm:col-span-1">
-            <div className="flex justify-center sm:block">
+            <div className="flex">
               <Logo />
             </div>
-            <p className="mx-auto mt-3 max-w-xs text-[13px] leading-relaxed text-subtle sm:mx-0 sm:mt-4 sm:text-sm">{t.tagline}</p>
+            <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-subtle sm:mt-4 sm:text-sm">{t.tagline}</p>
             <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.14em] text-subtle sm:mt-8 sm:text-[11px]">{t.fundedBy}</p>
             {/* Grille 2 × 2 : Inria, Inria Startup Studio / Pionniers de l'IA, Bpifrance */}
-            <div className="mx-auto mt-3 grid w-fit grid-cols-2 items-center justify-items-center gap-x-8 gap-y-4 sm:mx-0 sm:justify-items-start sm:gap-x-10 sm:gap-y-5">
+            <div className="mt-3 grid w-fit grid-cols-2 items-center justify-items-start gap-x-8 gap-y-4 sm:gap-x-10 sm:gap-y-5">
               {FUNDERS.map((f, i) => (
                 <Fragment key={f.name}>
                   {/* Pionniers de l'IA se place avant Bpifrance (3e case). */}
@@ -714,7 +713,7 @@ export function Footer() {
         </div>
         </m.div>
 
-        <Container className="relative z-10 flex flex-col items-center justify-between gap-2.5 border-t border-line py-4 text-xs text-subtle sm:flex-row sm:gap-4 sm:py-5">
+        <Container className="relative z-10 flex flex-col items-start justify-between gap-2.5 border-t border-line py-4 text-xs text-subtle sm:flex-row sm:items-center sm:gap-4 sm:py-5">
           <span>{t.rights}</span>
           <a href="#top" className="group inline-flex items-center gap-2.5 whitespace-nowrap transition-colors duration-300 hover:text-fg">
             <span className="relative">

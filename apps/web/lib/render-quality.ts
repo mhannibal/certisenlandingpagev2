@@ -1,3 +1,5 @@
+import { NeutralToneMapping } from "three";
+
 /**
  * Réglages de rendu 3D adaptés à l'appareil, lus une fois côté client (les scènes 3D ne sont
  * jamais rendues côté serveur). Les ordinateurs gardent la qualité d'origine ; les téléphones
@@ -9,11 +11,19 @@ export type RenderQuality = {
   dpr: [number, number];
   /** Échantillons d'anticrénelage du post-traitement. */
   msaa: number;
+  /**
+   * Post-traitement (lueur des lumières, vignette). Coupé sur téléphone et appareil modeste
+   * (« scène allégée », Lucas, 13/11/2026) : sa compilation bloquait la première image ; la courbe
+   * de tons est alors appliquée par le rendu lui-même et la vignette par un dégradé CSS.
+   */
+  post: boolean;
+  /** Finesse de la carrosserie générée (1 = complète ; 0,6 sur téléphone : calcul ≈ 3 fois plus court). */
+  detail: number;
 };
 
-const DESKTOP: RenderQuality = { dpr: [1, 1.75], msaa: 4 };
-const PHONE: RenderQuality = { dpr: [1, 1.25], msaa: 2 };
-const MODEST: RenderQuality = { dpr: [1, 1], msaa: 2 };
+const DESKTOP: RenderQuality = { dpr: [1, 1.75], msaa: 4, post: true, detail: 1 };
+const PHONE: RenderQuality = { dpr: [1, 1.25], msaa: 2, post: false, detail: 0.6 };
+const MODEST: RenderQuality = { dpr: [1, 1], msaa: 2, post: false, detail: 0.6 };
 
 export function renderQuality(): RenderQuality {
   if (typeof window === "undefined") return DESKTOP;
@@ -28,3 +38,18 @@ export function renderQuality(): RenderQuality {
 
 /** Densité de repli quand la fluidité chute. */
 export const DPR_FLOOR = 1;
+
+/**
+ * Options du rendu WebGL. Sans post-traitement, la courbe de tons « PBR Neutral » (celle du
+ * post-traitement sur ordinateur) est appliquée directement : mêmes couleurs, sans la lueur.
+ */
+export function glOptions(q: RenderQuality) {
+  return {
+    antialias: true,
+    powerPreference: "high-performance" as const,
+    ...(q.post ? {} : { toneMapping: NeutralToneMapping }),
+  };
+}
+
+/** Vignette en CSS (sans post-traitement) : bords assombris comme l'effet Vignette du rendu. */
+export const CSS_VIGNETTE = "radial-gradient(ellipse at center, transparent 50%, rgb(0 0 0 / 0.5) 100%)";

@@ -2,50 +2,74 @@
 
 import * as m from "motion/react-m";
 
-import { LOGO_PATHS } from "@/lib/logo-paths";
+import { BRAND, SYMBOL, SYMBOL_BLUE, WORDMARK } from "@/lib/logo-paths";
 
 /**
- * Logo CertiSen (monochrome) : bouclier plein = sûreté, couronne et poussoir
- * de chronomètre = temps réel, coche en réserve = certifié. Tracés dans lib/logo-paths.
+ * Logo officiel CertiSen (13/11/2026) : demi-bouclier, chronomètre et coche verte. Tracés
+ * vectorisés depuis les logos fournis (lib/logo-paths.ts, scripts/logo-trace.py).
+ * - `tone="dark"` (par défaut) : pour fond sombre, dessin de la couleur du texte (blanc) ;
+ * - `tone="light"` : pour fond clair, dessin bleu CertiSen (cadran plein).
  */
-export { LOGO_PATHS };
+export { BRAND, SYMBOL, SYMBOL_BLUE, WORDMARK };
 
 export function LogoMark({
   size = 28,
   animate = true,
+  tone = "dark",
   className,
-  cutout = "var(--color-ink)",
 }: {
+  /** Hauteur en pixels (la largeur suit les proportions du symbole). */
   size?: number;
   animate?: boolean;
+  tone?: "dark" | "light";
   className?: string;
-  /** Couleur de la coche en réserve (celle du fond). */
-  cutout?: string;
 }) {
+  const s = tone === "light" ? SYMBOL_BLUE : SYMBOL;
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" className={className} aria-hidden>
-      <path d={LOGO_PATHS.crown} fill="currentColor" />
-      <path d={LOGO_PATHS.pusher} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d={LOGO_PATHS.shield} fill="currentColor" />
+    <svg
+      width={(size * s.w) / 100}
+      height={size}
+      viewBox={`0 0 ${s.w} 100`}
+      fill="none"
+      className={className}
+      aria-hidden
+    >
+      <path d={s.body} fill={tone === "light" ? BRAND.blue : "currentColor"} fillRule="evenodd" />
       <m.path
-        d={LOGO_PATHS.check}
-        stroke={cutout}
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={animate ? { pathLength: 0 } : false}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.7, delay: 0.5, ease: [0.65, 0, 0.35, 1] }}
+        d={s.check}
+        fill={BRAND.green}
+        fillRule="evenodd"
+        style={{ transformBox: "fill-box", transformOrigin: "30% 70%" }}
+        initial={animate ? { opacity: 0, scale: 0.4 } : false}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
       />
     </svg>
   );
 }
 
+/** Mot « CertiSen » dans la police du logo officiel (couleur du texte). */
+export function Wordmark({ height = 14, className }: { height?: number; className?: string }) {
+  return (
+    <svg
+      width={(height * WORDMARK.w) / 100}
+      height={height}
+      viewBox={`0 0 ${WORDMARK.w} 100`}
+      className={className}
+      aria-hidden
+    >
+      <path d={WORDMARK.d} fill="currentColor" fillRule="evenodd" />
+    </svg>
+  );
+}
+
+/** Logo horizontal (barre de navigation, pied de page) : symbole + mot. */
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 text-fg ${className ?? ""}`}>
-      <LogoMark size={26} />
-      <span className="text-[17px] font-medium tracking-[-0.025em]">CertiSen</span>
+      <LogoMark size={28} />
+      <Wordmark height={15} />
+      <span className="sr-only">CertiSen</span>
     </span>
   );
 }

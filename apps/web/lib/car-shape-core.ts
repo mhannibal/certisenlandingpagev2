@@ -251,6 +251,24 @@ export function orient(g: THREE.BufferGeometry, dir: THREE.Vector3) {
  * Panneau de la surface d'un côté : x ∈ [x0, x1] (x0 < x1), u entre uLo(x) et uHi(x).
  * Les normales sont tournées vers l'extérieur (gauche +z, droite −z, dessus +y).
  */
+/** Finesse des surfaces (1 = complète) ; modifiée seulement le temps d'un withDetail(). */
+let DETAIL = 1;
+
+/**
+ * Construit des surfaces avec une finesse réduite (ex. 0,6 sur téléphone : nombre de colonnes et
+ * de rangées de chaque surface multiplié par 0,6). Les frontières entre pièces restent sur la même
+ * surface analytique, sans trou.
+ */
+export function withDetail<T>(detail: number, build: () => T): T {
+  const prev = DETAIL;
+  DETAIL = detail;
+  try {
+    return build();
+  } finally {
+    DETAIL = prev;
+  }
+}
+
 export function surfacePatch(
   S: CarSurface,
   o: {
@@ -270,17 +288,19 @@ export function surfacePatch(
   const lo = bound(o.uLo);
   const hi = bound(o.uHi);
   const sp = o.spacing ?? ((s: number) => s);
+  const nx = Math.max(2, Math.round(o.nx * DETAIL));
+  const nu = Math.max(2, Math.round(o.nu * DETAIL));
   const pos: number[] = [];
   const nor: number[] = [];
   const n = new THREE.Vector3();
-  for (let i = 0; i <= o.nx; i++) {
+  for (let i = 0; i <= nx; i++) {
     // Une colonne par x : les points sémantiques (et ceux de x ± h) sont calculés une fois.
-    const x = lerp(o.x0, o.x1, sp(i / o.nx));
+    const x = lerp(o.x0, o.x1, sp(i / nx));
     const cols = surfaceColumns(S, x);
     const a = lo(x);
     const b = hi(x);
-    for (let j = 0; j <= o.nu; j++) {
-      const u = lerp(a, b, j / o.nu);
+    for (let j = 0; j <= nu; j++) {
+      const u = lerp(a, b, j / nu);
       const [z, y] = S.section(x, u, cols.at);
       surfaceNormal(S, x, u, o.side, cols, n);
       const d = o.offset ?? 0;
@@ -289,9 +309,9 @@ export function surfacePatch(
     }
   }
   const idx: number[] = [];
-  const row = o.nu + 1;
-  for (let i = 0; i < o.nx; i++)
-    for (let j = 0; j < o.nu; j++) {
+  const row = nu + 1;
+  for (let i = 0; i < nx; i++)
+    for (let j = 0; j < nu; j++) {
       const a = i * row + j;
       const b = a + row;
       if (o.side === -1) idx.push(a, a + 1, b, b, a + 1, b + 1);
